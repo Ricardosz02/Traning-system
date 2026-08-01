@@ -1,0 +1,11 @@
+{
+  "name": "training-system",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "expo": "~54.0.0"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@training-system/shared": ["../../packages/shared/index.ts"]
+    }
+  }
+}
