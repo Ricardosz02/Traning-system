@@ -31,3 +31,15 @@ export const addExercise = async (
 
   return data as Exercise;
 };
+
+export const deleteExercise = async (id: string): Promise<void> => {
+  const { error } = await supabase
+    .from('exercises')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Błąd serwisu podczas usuwania ćwiczenia:', error.message);
+    throw new Error('Nie udało się usunąć ćwiczenia.');
+  }
+};
