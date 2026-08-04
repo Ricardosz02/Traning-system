@@ -90,6 +90,12 @@ export const Dashboard: React.FC = () => {
                 <td style={{ padding: '10px' }}>{exercise.description}</td>
                 <td style={{ padding: '10px' }}>
                   <button 
+                  onClick={() => navigate(`/edit-exercise/${exercise.id}`)}
+                  style={{ padding: '5px 10px', backgroundColor: '#ffc107', color: 'black', border: 'none', cursor: 'pointer', marginRight: '5px' }}
+                  >
+                    Edytuj
+                  </button>
+                  <button 
                     onClick={() => handleDelete(exercise.id, exercise.name)}
                     style={{ padding: '5px 10px', backgroundColor: '#dc3545', color: 'white', border: 'none', cursor: 'pointer' }}
                   >

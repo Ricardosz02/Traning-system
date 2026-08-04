@@ -43,3 +43,37 @@ export const deleteExercise = async (id: string): Promise<void> => {
     throw new Error('Nie udało się usunąć ćwiczenia.');
   }
 };
+
+export const getExerciseById = async (id: string): Promise<Exercise> => {
+  const { data, error } = await supabase
+    .from('exercises')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    console.error(`Błąd podczas pobierania ćwiczenia o ID ${id}:`, error);
+    throw new Error('Nie udało się pobrać danych ćwiczenia.');
+  }
+
+  return data as Exercise;
+};
+
+export const updateExercise = async (
+  id: string,
+  updatedData: Omit<Exercise, 'id' | 'created_at'>
+): Promise<Exercise> => {
+  const { data, error } = await supabase
+    .from('exercises')
+    .update(updatedData)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error(`Błąd podczas aktualizacji ćwiczenia o ID ${id}:`, error);
+    throw new Error('Nie udało się zaktualizować ćwiczenia.');
+  }
+
+  return data as Exercise;
+};
