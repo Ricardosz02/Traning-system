@@ -63,6 +63,12 @@ export const Dashboard: React.FC = () => {
       >
         + Dodaj nowe ćwiczenie
       </button>
+      <button 
+        onClick={() => navigate('/users')}
+        style={{ padding: '10px 15px', backgroundColor: '#17a2b8', color: 'white', border: 'none', marginBottom: '15px', marginLeft: '10px', cursor: 'pointer' }}
+      >
+        Zarządzaj użytkownikami
+      </button>
       
       <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
         <thead>
