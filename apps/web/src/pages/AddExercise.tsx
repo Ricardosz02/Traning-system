@@ -15,13 +15,29 @@ export const AddExercise: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const categoryOptions: ExerciseCategory[] = ['STRENGTH', 'CALISTHENICS', 'CROSSFIT'];
-  const muscleOptions: { label: string, value: MuscleGroup }[] = [
-    { label: 'Klatka piersiowa', value: 'CHEST' },
-    { label: 'Plecy', value: 'BACK' },
-    { label: 'Nogi', value: 'LEGS' },
-    { label: 'Barki', value: 'SHOULDERS' },
-    { label: 'Ramiona', value: 'ARMS' },
-    { label: 'Brzuch', value: 'CORE' },
+  const muscleOptions: { label: string, value: MuscleGroup, category: string }[] = [
+    { label: 'Klatka piersiowa', value: 'CHEST', category: 'Góra' },
+    
+    { label: 'Plecy - Najszerszy', value: 'BACK_LATS', category: 'Góra' },
+    { label: 'Plecy - Czworoboczne', value: 'BACK_TRAPS', category: 'Góra' },
+    { label: 'Plecy - Prostowniki', value: 'BACK_ERECTORS', category: 'Góra' },
+    
+    { label: 'Barki - Przód', value: 'SHOULDERS_FRONT', category: 'Góra' },
+    { label: 'Barki - Środek', value: 'SHOULDERS_MID', category: 'Góra' },
+    { label: 'Barki - Tył', value: 'SHOULDERS_REAR', category: 'Góra' },
+    
+    { label: 'Biceps', value: 'BICEPS', category: 'Góra' },
+    { label: 'Triceps', value: 'TRICEPS', category: 'Góra' },
+    { label: 'Przedramiona', value: 'FOREARMS', category: 'Góra' },
+    
+    { label: 'Brzuch - Prosty', value: 'ABS_RECTUS', category: 'Środek' },
+    { label: 'Brzuch - Skośne', value: 'ABS_OBLIQUES', category: 'Środek' },
+    { label: 'Brzuch - Poprzeczny', value: 'ABS_TRANSVERSE', category: 'Środek' },
+    
+    { label: 'Nogi - Czworogłowy', value: 'QUADS', category: 'Dół' },
+    { label: 'Nogi - Dwugłowy', value: 'HAMSTRINGS', category: 'Dół' },
+    { label: 'Pośladki', value: 'GLUTES', category: 'Dół' },
+    { label: 'Łydki', value: 'CALVES', category: 'Dół' },
   ];
 
   const handleMuscleToggle = (value: MuscleGroup) => {
@@ -91,19 +107,31 @@ export const AddExercise: React.FC = () => {
         </div>
 
         <div>
-          <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>Grupy mięśniowe (zaznacz minimum jedną) *</label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-            {muscleOptions.map((option) => (
-              <label key={option.value} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                <input 
-                  type="checkbox"
-                  checked={muscleGroups.includes(option.value)}
-                  onChange={() => handleMuscleToggle(option.value)}
-                />
-                {option.label}
-              </label>
-            ))}
-          </div>
+          <label style={{ display: 'block', marginBottom: '15px', fontWeight: 'bold', borderBottom: '1px solid #ccc', paddingBottom: '5px' }}>
+            Grupy mięśniowe (zaznacz minimum jedną) *
+          </label>
+          
+          {['Góra', 'Środek', 'Dół'].map((kategoria) => (
+            <div key={kategoria} style={{ marginBottom: '15px' }}>
+              <h4 style={{ margin: '0 0 10px 0', color: '#666', fontSize: '0.9em', textTransform: 'uppercase' }}>
+                {kategoria} ciała
+              </h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                {muscleOptions
+                  .filter((option) => option.category === kategoria)
+                  .map((option) => (
+                    <label key={option.value} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9em' }}>
+                      <input 
+                        type="checkbox"
+                        checked={muscleGroups.includes(option.value)}
+                        onChange={() => handleMuscleToggle(option.value)}
+                      />
+                      {option.label}
+                    </label>
+                  ))}
+              </div>
+            </div>
+          ))}
         </div>
 
         <div>

@@ -17,13 +17,29 @@ export const EditExercise: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const categoryOptions: ExerciseCategory[] = ['STRENGTH', 'CALISTHENICS', 'CROSSFIT'];
-  const muscleOptions: { label: string, value: MuscleGroup }[] = [
-    { label: 'Klatka piersiowa', value: 'CHEST' },
-    { label: 'Plecy', value: 'BACK' },
-    { label: 'Nogi', value: 'LEGS' },
-    { label: 'Barki', value: 'SHOULDERS' },
-    { label: 'Ramiona', value: 'ARMS' },
-    { label: 'Brzuch', value: 'CORE' },
+  const muscleOptions: { label: string, value: MuscleGroup, category: string }[] = [
+    { label: 'Klatka piersiowa', value: 'CHEST', category: 'Góra' },
+    
+    { label: 'Plecy - Najszerszy', value: 'BACK_LATS', category: 'Góra' },
+    { label: 'Plecy - Czworoboczne', value: 'BACK_TRAPS', category: 'Góra' },
+    { label: 'Plecy - Prostowniki', value: 'BACK_ERECTORS', category: 'Góra' },
+    
+    { label: 'Barki - Przód', value: 'SHOULDERS_FRONT', category: 'Góra' },
+    { label: 'Barki - Środek', value: 'SHOULDERS_MID', category: 'Góra' },
+    { label: 'Barki - Tył', value: 'SHOULDERS_REAR', category: 'Góra' },
+    
+    { label: 'Biceps', value: 'BICEPS', category: 'Góra' },
+    { label: 'Triceps', value: 'TRICEPS', category: 'Góra' },
+    { label: 'Przedramiona', value: 'FOREARMS', category: 'Góra' },
+    
+    { label: 'Brzuch - Prosty', value: 'ABS_RECTUS', category: 'Środek' },
+    { label: 'Brzuch - Skośne', value: 'ABS_OBLIQUES', category: 'Środek' },
+    { label: 'Brzuch - Poprzeczny', value: 'ABS_TRANSVERSE', category: 'Środek' },
+    
+    { label: 'Nogi - Czworogłowy (przód)', value: 'QUADS', category: 'Dół' },
+    { label: 'Nogi - Dwugłowy (tył)', value: 'HAMSTRINGS', category: 'Dół' },
+    { label: 'Pośladki', value: 'GLUTES', category: 'Dół' },
+    { label: 'Łydki', value: 'CALVES', category: 'Dół' },
   ];
 
   useEffect(() => {
