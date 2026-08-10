@@ -1,30 +1,60 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
-import { Exercise } from '@training-system/shared';
+import React from "react";
+import { ActivityIndicator, View } from "react-native";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-export default function App() {
-  const testExercise: Exercise = {
-    id: '1',
-    name: 'Wyciskanie sztangi leżąc',
-    muscleGroup: 'CHEST',
-  };
+import { AuthProvider, useAuth } from "./src/contexts/AuthContext";
 
-  console.log('Zainicjowane ćwiczenie:', testExercise.name);
+import { LoginScreen } from "./src/screens/LoginScreen";
+import { RegisterScreen } from "./src/screens/RegisterScreen";
+import { HomeScreen } from "./src/screens/HomeScreen";
+
+const AuthStack = createNativeStackNavigator();
+const AppStack = createNativeStackNavigator();
+
+const NavigationWrapper = () => {
+  const { session, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#17a2b8" />
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <Text>Witaj w systemie treningowym!</Text>
-      <Text>Aktywne ćwiczenie: {testExercise.name}</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+      {session ? (
+        <AppStack.Navigator>
+          <AppStack.Screen
+            name="Home"
+            component={HomeScreen}
+            options={{ title: "Panel Główny" }}
+          />
+        </AppStack.Navigator>
+      ) : (
+        <AuthStack.Navigator initialRouteName="Login">
+          <AuthStack.Screen
+            name="Login"
+            component={LoginScreen}
+            options={{ headerShown: false }}
+          />
+          <AuthStack.Screen
+            name="Register"
+            component={RegisterScreen}
+            options={{ title: "Załóż konto" }}
+          />
+        </AuthStack.Navigator>
+      )}
+    </NavigationContainer>
+  );
+};
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <NavigationWrapper />
+    </AuthProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
