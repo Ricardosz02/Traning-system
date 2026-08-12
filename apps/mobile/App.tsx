@@ -7,10 +7,19 @@ import { AuthProvider, useAuth } from "./src/contexts/AuthContext";
 
 import { LoginScreen } from "./src/screens/LoginScreen";
 import { RegisterScreen } from "./src/screens/RegisterScreen";
-import { HomeScreen } from "./src/screens/HomeScreen";
+import { TabNavigator } from "./src/navigation/TabNavigator"; 
 
-const AuthStack = createNativeStackNavigator();
-const AppStack = createNativeStackNavigator();
+export type AuthStackParamList = {
+  Login: undefined;
+  Register: undefined;
+};
+
+export type AppStackParamList = {
+  MainTabs: undefined;
+};
+
+const AuthStack = createNativeStackNavigator<AuthStackParamList>();
+const AppStack = createNativeStackNavigator<AppStackParamList>();
 
 const NavigationWrapper = () => {
   const { session, isLoading } = useAuth();
@@ -28,9 +37,9 @@ const NavigationWrapper = () => {
       {session ? (
         <AppStack.Navigator>
           <AppStack.Screen
-            name="Home"
-            component={HomeScreen}
-            options={{ title: "Panel Główny" }}
+            name="MainTabs"
+            component={TabNavigator}
+            options={{ headerShown: false }} 
           />
         </AppStack.Navigator>
       ) : (
