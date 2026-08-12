@@ -1,9 +1,9 @@
-import { Router } from 'express';
-import { generatePlan } from '../controllers/aiController.js';
+import { Router } from "express";
+import { generatePlan } from "../controllers/aiController.js";
 
 const router = Router();
 
 // Rejestracja trasy POST dla generatora planów
-router.post('/generate', generatePlan);
+router.post("/generate", generatePlan);
 
 export default router;

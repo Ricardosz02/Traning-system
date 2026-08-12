@@ -1,10 +1,10 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Login } from './pages/Login';
-import { Dashboard } from './pages/Dashboard';
-import { AddExercise } from './pages/AddExercise';
-import { EditExercise } from './pages/EditExercise';
-import { Users } from './pages/Users';
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Login } from "./pages/Login";
+import { Dashboard } from "./pages/Dashboard";
+import { AddExercise } from "./pages/AddExercise";
+import { EditExercise } from "./pages/EditExercise";
+import { Users } from "./pages/Users";
 
 const App: React.FC = () => {
   return (
