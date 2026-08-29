@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useWorkoutStore } from '../store/workoutStore';
+import { SetRow } from '../components/SetRow';
+import { ExerciseSelectorModal } from '../components/ExerciseSelectorModal';
 
 export const TrainingScreen = () => {
-  const { isActive, startWorkout, endWorkout, exercises, addExercise } = useWorkoutStore();
+  const { isActive, startWorkout, endWorkout, exercises, addSet } = useWorkoutStore();
+  const [isModalVisible, setModalVisible] = useState(false);
 
   if (!isActive) {
     return (
@@ -32,76 +35,66 @@ export const TrainingScreen = () => {
           exercises.map((ex) => (
             <View key={ex.id} style={styles.exerciseCard}>
               <Text style={styles.exerciseName}>{ex.name}</Text>
+              
+              <View style={styles.columnHeaders}>
+                <Text style={styles.headerText}>Seria</Text>
+                <Text style={styles.headerText}>Kg</Text>
+                <Text style={styles.headerText}>Powt.</Text>
+                <Text style={styles.headerText}>RPE</Text>
+                <Text style={styles.headerText}>✔</Text>
+              </View>
+
+              {ex.sets.map((set, index) => (
+                <SetRow 
+                  key={set.id} 
+                  exerciseId={ex.id} 
+                  item={set} 
+                  index={index} 
+                />
+              ))}
+
+              <TouchableOpacity 
+                style={styles.addSetButton} 
+                onPress={() => addSet(ex.id)}
+              >
+                <Text style={styles.addSetText}>+ Dodaj serię</Text>
+              </TouchableOpacity>
             </View>
           ))
         )}
 
         <TouchableOpacity
           style={styles.secondaryButton}
-          onPress={() => addExercise('mock-id', 'Wyciskanie sztangi leżąc')}
+          onPress={() => setModalVisible(true)}
         >
-          <Text style={styles.secondaryButtonText}>+ Dodaj Ćwiczenie</Text>
+          <Text style={styles.secondaryButtonText}>+ Dodaj Ćwiczenie z katalogu</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <ExerciseSelectorModal 
+        visible={isModalVisible} 
+        onClose={() => setModalVisible(false)} 
+      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  centerContainer: { 
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    backgroundColor: '#f8f9fa' 
-  },
-  container: { 
-    flex: 1, 
-    backgroundColor: '#f8f9fa', 
-    paddingTop: 50 
-  },
-  header: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    paddingHorizontal: 20, 
-    marginBottom: 20, 
-    alignItems: 'center' 
-  },
+  centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8f9fa' },
+  container: { flex: 1, backgroundColor: '#f8f9fa', paddingTop: 50 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20, marginBottom: 20, alignItems: 'center' },
   title: { fontSize: 24, fontWeight: 'bold', color: '#333' },
-  primaryButton: { 
-    backgroundColor: '#17a2b8', 
-    paddingVertical: 15, 
-    paddingHorizontal: 30, 
-    borderRadius: 10, 
-    marginTop: 20 
-  },
-  dangerButton: { 
-    backgroundColor: '#dc3545', 
-    paddingVertical: 10, 
-    paddingHorizontal: 20, 
-    borderRadius: 8 
-  },
-  secondaryButton: { 
-    backgroundColor: '#e2e8f0', 
-    paddingVertical: 15, 
-    borderRadius: 10, 
-    alignItems: 'center', 
-    margin: 20 
-  },
+  primaryButton: { backgroundColor: '#17a2b8', paddingVertical: 15, paddingHorizontal: 30, borderRadius: 10, marginTop: 20 },
+  dangerButton: { backgroundColor: '#dc3545', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
+  secondaryButton: { backgroundColor: '#e2e8f0', paddingVertical: 15, borderRadius: 10, alignItems: 'center', margin: 20 },
   secondaryButtonText: { color: '#333', fontWeight: 'bold', fontSize: 16 },
   buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   workoutArea: { flex: 1 },
   emptyText: { textAlign: 'center', color: '#666', marginTop: 50 },
-  exerciseCard: { 
-    backgroundColor: '#fff', 
-    padding: 15, 
-    marginHorizontal: 20, 
-    marginBottom: 15, 
-    borderRadius: 10, 
-    elevation: 2, 
-    shadowColor: '#000', 
-    shadowOpacity: 0.1, 
-    shadowRadius: 4, 
-    shadowOffset: { width: 0, height: 2 } 
-  },
-  exerciseName: { fontSize: 18, fontWeight: 'bold', color: '#333' }
+  exerciseCard: { backgroundColor: '#fff', padding: 15, marginHorizontal: 20, marginBottom: 15, borderRadius: 10, elevation: 2, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } },
+  exerciseName: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+  columnHeaders: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 15, marginBottom: 5, paddingHorizontal: 5 },
+  headerText: { fontSize: 12, color: '#999', fontWeight: 'bold', width: 40, textAlign: 'center' },
+  addSetButton: { marginTop: 15, paddingVertical: 10, alignItems: 'center', backgroundColor: '#f8f9fa', borderRadius: 8 },
+  addSetText: { color: '#17a2b8', fontWeight: 'bold' },
 });
