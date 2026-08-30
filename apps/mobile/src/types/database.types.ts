@@ -54,3 +54,24 @@ export interface WorkoutSetRecord {
   set_order: number;
   created_at: string;
 }
+
+export interface TrainingPlan {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+}
+
+export interface PlanExercise {
+  id: string;
+  plan_id: string;
+  exercise_id: string;
+  day_of_week: number;
+  order_in_day: number;
+  target_sets: number;
+  target_reps: string | null;
+  created_at: string;
+  
+  exercise?: Exercise; 
+}

@@ -8,15 +8,10 @@ import { AuthProvider, useAuth } from "./src/contexts/AuthContext";
 import { LoginScreen } from "./src/screens/LoginScreen";
 import { RegisterScreen } from "./src/screens/RegisterScreen";
 import { TabNavigator } from "./src/navigation/TabNavigator"; 
+import { CreatePlanScreen } from "./src/screens/CreatePlanScreen";
 
-export type AuthStackParamList = {
-  Login: undefined;
-  Register: undefined;
-};
-
-export type AppStackParamList = {
-  MainTabs: undefined;
-};
+import { AuthStackParamList, AppStackParamList } from "./src/types/navigation.types";
+import { PlanDetailsScreen } from "./src/screens/PlanDetailsScreen";
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const AppStack = createNativeStackNavigator<AppStackParamList>();
@@ -40,6 +35,19 @@ const NavigationWrapper = () => {
             name="MainTabs"
             component={TabNavigator}
             options={{ headerShown: false }} 
+          />
+          <AppStack.Screen
+            name="CreatePlan"
+            component={CreatePlanScreen}
+            options={{ headerShown: false, presentation: 'modal' }} 
+          />
+          <AppStack.Screen
+            name="PlanDetails"
+            component={PlanDetailsScreen}
+            options={({ route }) => ({ 
+              title: route.params.planName,
+              headerBackTitle: 'Wstecz' 
+            })} 
           />
         </AppStack.Navigator>
       ) : (

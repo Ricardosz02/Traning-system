@@ -5,9 +5,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { HomeScreen } from '../screens/HomeScreen';
 import { TrainingScreen } from '../screens/TrainingScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
+import { PlansScreen } from '../screens/PlansScreen';
 
 export type TabParamList = {
   Katalog: undefined;
+  Plany: undefined;
   Trening: undefined;
   Profil: undefined;
 };
@@ -23,6 +25,8 @@ export const TabNavigator = () => {
 
           if (route.name === 'Katalog') {
             iconName = focused ? 'list' : 'list-outline';
+          } else if (route.name === 'Plany') {
+            iconName = focused ? 'calendar' : 'calendar-outline';
           } else if (route.name === 'Trening') {
             iconName = focused ? 'barbell' : 'barbell-outline';
           } else if (route.name === 'Profil') {
@@ -39,6 +43,7 @@ export const TabNavigator = () => {
       })}
     >
       <Tab.Screen name="Katalog" component={HomeScreen} />
+      <Tab.Screen name="Plany" component={PlansScreen} />
       <Tab.Screen name="Trening" component={TrainingScreen} />
       <Tab.Screen name="Profil" component={ProfileScreen} />
     </Tab.Navigator>

@@ -6,9 +6,10 @@ import { useWorkoutStore } from "../store/workoutStore";
 interface Props {
   visible: boolean;
   onClose: () => void;
+  onSelect?: (exercise: Exercise) => void; 
 }
 
-export const ExerciseSelectorModal = ({ visible, onClose }: Props) => {
+export const ExerciseSelectorModal = ({ visible, onClose, onSelect }: Props) => {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -33,7 +34,11 @@ export const ExerciseSelectorModal = ({ visible, onClose }: Props) => {
   };
 
   const handleSelect = (exercise: Exercise) => {
-    addExercise(exercise.id, exercise.name);
+    if (onSelect) {
+      onSelect(exercise);
+    } else {
+      addExercise(exercise.id, exercise.name);
+    }
     onClose();
   };
 
