@@ -32,6 +32,11 @@ export interface Profile {
   id: string;
   email: string;
   role: UserRole;
+  display_name?: string | null;
+  weight?: number | null;
+  height?: number | null;
+  birth_date?: string | null;
+  avatar_url?: string | null;
   created_at: string;
 }
 
@@ -72,6 +77,5 @@ export interface PlanExercise {
   target_sets: number;
   target_reps: string | null;
   created_at: string;
-  
-  exercise?: Exercise; 
+  exercise?: Exercise;
 }
