@@ -66,3 +66,26 @@ export const fetchPlanDetails = async (planId: string) => {
 
   return data;
 };
+
+export const fetchUserDashboardData = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('training_plans')
+    .select(`
+      id,
+      name,
+      plan_exercises (
+        day_of_week,
+        target_sets,
+        target_reps,
+        exercise_id,
+        exercise:exercises (name)
+      )
+    `)
+    .eq('user_id', userId);
+
+  if (error) {
+    throw new Error(`Błąd pobierania danych dashboardu: ${error.message}`);
+  }
+
+  return data;
+};
