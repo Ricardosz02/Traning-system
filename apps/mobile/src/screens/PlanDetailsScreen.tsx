@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
-import { useRoute, RouteProp } from '@react-navigation/native';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { fetchPlanDetails } from '../services/planService';
 import { AppStackParamList } from '../types/navigation.types';
+import { useWorkoutStore } from '../store/workoutStore';
 
 type PlanDetailsRouteProp = RouteProp<AppStackParamList, 'PlanDetails'>;
 
@@ -13,10 +14,13 @@ const DAY_NAMES: Record<number, string> = {
 
 export const PlanDetailsScreen = () => {
   const route = useRoute<PlanDetailsRouteProp>();
+  const navigation = useNavigation();
   const { planId } = route.params;
 
   const [loading, setLoading] = useState(true);
   const [exercisesByDay, setExercisesByDay] = useState<Record<number, any[]>>({});
+  
+  const { startWorkoutFromPlan, isActive } = useWorkoutStore();
 
   useEffect(() => {
     const loadDetails = async () => {
@@ -40,6 +44,27 @@ export const PlanDetailsScreen = () => {
 
     loadDetails();
   }, [planId]);
+
+  const handleStartWorkout = (day: number) => {
+    if (isActive) {
+      Alert.alert(
+        "Trening w toku", 
+        "Masz już aktywny trening. Zakończ go przed rozpoczęciem nowego."
+      );
+      return;
+    }
+
+    const dayExercises = exercisesByDay[day];
+    
+    const mappedExercises = dayExercises.map(item => ({
+      exerciseId: item.exercise_id,
+      name: item.exercise?.name || 'Nieznane ćwiczenie',
+      targetSets: item.target_sets || 3
+    }));
+    startWorkoutFromPlan(mappedExercises);
+    // @ts-ignore
+    navigation.navigate('MainTabs', { screen: 'Trening' });
+  };
 
   if (loading) {
     return (
@@ -73,6 +98,13 @@ export const PlanDetailsScreen = () => {
                 </View>
               </View>
             ))}
+
+            <TouchableOpacity 
+              style={styles.startButton}
+              onPress={() => handleStartWorkout(day)}
+            >
+              <Text style={styles.startButtonText}>Rozpocznij trening</Text>
+            </TouchableOpacity>
           </View>
         ))
       )}
@@ -91,5 +123,7 @@ const styles = StyleSheet.create({
   orderText: { color: '#0284c7', fontWeight: 'bold', fontSize: 14 },
   exerciseInfo: { flex: 1 },
   exerciseName: { fontSize: 16, fontWeight: 'bold', color: '#333' },
-  exerciseDetails: { fontSize: 13, color: '#666', marginTop: 2 }
+  exerciseDetails: { fontSize: 13, color: '#666', marginTop: 2 },
+  startButton: { backgroundColor: '#17a2b8', paddingVertical: 12, borderRadius: 8, alignItems: 'center', marginTop: 15 },
+  startButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 15 }
 });

@@ -15,12 +15,19 @@ export interface WorkoutExercise {
   sets: WorkoutSet[];
 }
 
+interface PlannedExerciseInput {
+  exerciseId: string;
+  name: string;
+  targetSets: number;
+}
+
 interface WorkoutStore {
   isActive: boolean;
   startTime: Date | null;
   exercises: WorkoutExercise[];
   
   startWorkout: () => void;
+  startWorkoutFromPlan: (plannedExercises: PlannedExerciseInput[]) => void;
   endWorkout: () => void;
   addExercise: (exerciseId: string, name: string) => void;
   addSet: (exerciseId: string) => void;
@@ -34,6 +41,28 @@ export const useWorkoutStore = create<WorkoutStore>((set) => ({
 
   startWorkout: () => set({ isActive: true, startTime: new Date(), exercises: [] }),
   
+  startWorkoutFromPlan: (plannedExercises) => 
+    set(() => {
+      const exercises: WorkoutExercise[] = plannedExercises.map((planEx, index) => {
+        const sets: WorkoutSet[] = Array.from({ length: planEx.targetSets }).map((_, setIndex) => ({
+          id: `${Date.now()}-${index}-${setIndex}`,
+          weight: 0,
+          reps: 0,
+          rpe: 8,
+          completed: false,
+        }));
+
+        return {
+          id: `${Date.now()}-${index}`,
+          exerciseId: planEx.exerciseId,
+          name: planEx.name,
+          sets,
+        };
+      });
+
+      return { isActive: true, startTime: new Date(), exercises };
+    }),
+
   endWorkout: () => set({ isActive: false, startTime: null, exercises: [] }),
 
   addExercise: (exerciseId, name) => 
