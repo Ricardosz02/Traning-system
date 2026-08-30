@@ -1,12 +1,50 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { useWorkoutStore } from '../store/workoutStore';
 import { SetRow } from '../components/SetRow';
 import { ExerciseSelectorModal } from '../components/ExerciseSelectorModal';
+import { useAuth } from '../contexts/AuthContext';
+import { saveWorkoutSession } from '../services/workoutService';
 
 export const TrainingScreen = () => {
-  const { isActive, startWorkout, endWorkout, exercises, addSet } = useWorkoutStore();
+  const { user } = useAuth();
+  const { isActive, startTime, startWorkout, endWorkout, exercises, addSet } = useWorkoutStore();
+  
   const [isModalVisible, setModalVisible] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleFinishWorkout = async () => {
+    if (!user?.id) {
+      Alert.alert("Błąd autoryzacji", "Nie znaleziono aktywnej sesji użytkownika.");
+      return;
+    }
+
+    if (!startTime) {
+      Alert.alert("Błąd logiki", "Brak czasu rozpoczęcia treningu.");
+      return;
+    }
+
+    if (exercises.length === 0) {
+      Alert.alert("Uwaga", "Trening jest pusty, dodaj ćwiczenia przed zakończeniem.");
+      return;
+    }
+
+    setIsSaving(true);
+    
+    try {
+      const startedAt = startTime.toISOString();
+      const endedAt = new Date().toISOString();
+
+      await saveWorkoutSession(user.id, startedAt, endedAt, exercises);
+
+      Alert.alert("Sukces", "Trening został pomyślnie zapisany!");
+      endWorkout();
+    } catch (error: any) {
+      Alert.alert("Błąd zapisu treningu", error.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   if (!isActive) {
     return (
@@ -23,8 +61,16 @@ export const TrainingScreen = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Trening w toku</Text>
-        <TouchableOpacity style={styles.dangerButton} onPress={endWorkout}>
-          <Text style={styles.buttonText}>Zakończ</Text>
+        <TouchableOpacity 
+          style={[styles.dangerButton, isSaving && styles.disabledButton]} 
+          onPress={handleFinishWorkout}
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Zakończ i zapisz</Text>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -85,7 +131,8 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20, marginBottom: 20, alignItems: 'center' },
   title: { fontSize: 24, fontWeight: 'bold', color: '#333' },
   primaryButton: { backgroundColor: '#17a2b8', paddingVertical: 15, paddingHorizontal: 30, borderRadius: 10, marginTop: 20 },
-  dangerButton: { backgroundColor: '#dc3545', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
+  dangerButton: { backgroundColor: '#dc3545', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8, minWidth: 100, alignItems: 'center' },
+  disabledButton: { opacity: 0.7 },
   secondaryButton: { backgroundColor: '#e2e8f0', paddingVertical: 15, borderRadius: 10, alignItems: 'center', margin: 20 },
   secondaryButtonText: { color: '#333', fontWeight: 'bold', fontSize: 16 },
   buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },

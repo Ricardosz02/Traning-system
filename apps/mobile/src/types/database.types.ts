@@ -34,3 +34,23 @@ export interface Profile {
   role: UserRole;
   created_at: string;
 }
+
+export interface Workout {
+  id: string;
+  user_id: string;
+  started_at: string;
+  ended_at: string;
+  total_volume: number;
+  created_at: string;
+}
+
+export interface WorkoutSetRecord {
+  id: string;
+  workout_id: string;
+  exercise_id: string;
+  weight: number;
+  reps: number;
+  rpe: number | null;
+  set_order: number;
+  created_at: string;
+}
