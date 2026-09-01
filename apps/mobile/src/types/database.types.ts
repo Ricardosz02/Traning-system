@@ -79,3 +79,15 @@ export interface PlanExercise {
   created_at: string;
   exercise?: Exercise;
 }
+
+export interface BodyMeasurement {
+  id: string;
+  user_id: string;
+  date: string;
+  biceps: number | null;
+  chest: number | null;
+  waist: number | null;
+  thighs: number | null;
+  calves: number | null;
+  created_at: string;
+}

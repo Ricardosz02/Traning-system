@@ -16,6 +16,7 @@ import DateTimePicker, {
 } from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../contexts/AuthContext";
 import {
   fetchUserProfile,
@@ -26,6 +27,7 @@ import { Profile } from "../types/database.types";
 
 export const ProfileScreen = () => {
   const { user } = useAuth();
+  const navigation = useNavigation<any>();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -294,6 +296,33 @@ export const ProfileScreen = () => {
           )}
         </TouchableOpacity>
       </View>
+
+      <TouchableOpacity
+        style={[
+          styles.card,
+          {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginTop: 0,
+            marginBottom: 40,
+          },
+        ]}
+        onPress={() => navigation.navigate("Measurements")}
+      >
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <Ionicons
+            name="body"
+            size={24}
+            color="#17a2b8"
+            style={{ marginRight: 10 }}
+          />
+          <Text style={{ fontSize: 16, fontWeight: "bold", color: "#333" }}>
+            Moje Wymiary
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={24} color="#ccc" />
+      </TouchableOpacity>
     </ScrollView>
   );
 };
