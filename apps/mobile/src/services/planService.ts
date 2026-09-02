@@ -1,12 +1,14 @@
-import { supabase } from '../lib/supabase';
-import { TrainingPlan, PlanExercise } from '../types/database.types';
+import { supabase } from "../lib/supabase";
+import { TrainingPlan, PlanExercise } from "../types/database.types";
 
-export const fetchUserPlans = async (userId: string): Promise<TrainingPlan[]> => {
+export const fetchUserPlans = async (
+  userId: string,
+): Promise<TrainingPlan[]> => {
   const { data, error } = await supabase
-    .from('training_plans')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+    .from("training_plans")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
 
   if (error) {
     throw new Error(`Błąd pobierania planów: ${error.message}`);
@@ -19,10 +21,10 @@ export const createPlanWithExercises = async (
   userId: string,
   name: string,
   description: string,
-  exercises: Omit<PlanExercise, 'id' | 'created_at' | 'plan_id'>[]
+  exercises: Omit<PlanExercise, "id" | "created_at" | "plan_id">[],
 ) => {
   const { data: plan, error: planError } = await supabase
-    .from('training_plans')
+    .from("training_plans")
     .insert([{ user_id: userId, name, description }])
     .select()
     .single();
@@ -38,7 +40,7 @@ export const createPlanWithExercises = async (
     }));
 
     const { error: exercisesError } = await supabase
-      .from('plan_exercises')
+      .from("plan_exercises")
       .insert(exercisesToInsert);
 
     if (exercisesError) {
@@ -51,14 +53,16 @@ export const createPlanWithExercises = async (
 
 export const fetchPlanDetails = async (planId: string) => {
   const { data, error } = await supabase
-    .from('plan_exercises')
-    .select(`
+    .from("plan_exercises")
+    .select(
+      `
       *,
       exercise:exercises (*)
-    `)
-    .eq('plan_id', planId)
-    .order('day_of_week', { ascending: true })
-    .order('order_in_day', { ascending: true });
+    `,
+    )
+    .eq("plan_id", planId)
+    .order("day_of_week", { ascending: true })
+    .order("order_in_day", { ascending: true });
 
   if (error) {
     throw new Error(`Błąd pobierania szczegółów planu: ${error.message}`);
@@ -69,8 +73,9 @@ export const fetchPlanDetails = async (planId: string) => {
 
 export const fetchUserDashboardData = async (userId: string) => {
   const { data, error } = await supabase
-    .from('training_plans')
-    .select(`
+    .from("training_plans")
+    .select(
+      `
       id,
       name,
       plan_exercises (
@@ -80,8 +85,9 @@ export const fetchUserDashboardData = async (userId: string) => {
         exercise_id,
         exercise:exercises (name)
       )
-    `)
-    .eq('user_id', userId);
+    `,
+    )
+    .eq("user_id", userId);
 
   if (error) {
     throw new Error(`Błąd pobierania danych dashboardu: ${error.message}`);
