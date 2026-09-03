@@ -6,6 +6,7 @@ export interface Exercise {
   muscle_group: string[];
   description: string;
   category: string;
+  video_url?: string;
 }
 
 export const fetchExercises = async (): Promise<Exercise[]> => {
@@ -20,4 +21,21 @@ export const fetchExercises = async (): Promise<Exercise[]> => {
   }
 
   return data || [];
+};
+
+export const updateExerciseVideoUrl = async (
+  exerciseId: string,
+  videoUrl: string,
+) => {
+  const { data, error } = await supabase
+    .from("exercises")
+    .update({ video_url: videoUrl || null })
+    .eq("id", exerciseId)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data;
 };
