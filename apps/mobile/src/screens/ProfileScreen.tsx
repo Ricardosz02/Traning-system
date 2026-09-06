@@ -27,7 +27,12 @@ import {
   uploadAvatar,
 } from "../services/profileService";
 import { Profile } from "../types/database.types";
-import { signOut } from "../services/authService";
+import {
+  signOut,
+  resetPassword,
+  updateEmail,
+  updatePassword,
+} from "../services/authService";
 
 export const ProfileScreen = () => {
   const { user } = useAuth();
@@ -48,6 +53,15 @@ export const ProfileScreen = () => {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [weightUnit, setWeightUnit] = useState<"kg" | "lbs">("kg");
+
+  const [isEmailModalVisible, setIsEmailModalVisible] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [isEmailLoading, setIsEmailLoading] = useState(false);
+
+  const [isPasswordModalVisible, setIsPasswordModalVisible] = useState(false);
+  const [newPasswordInput, setNewPasswordInput] = useState("");
+  const [confirmPasswordInput, setConfirmPasswordInput] = useState("");
+  const [isPasswordLoading, setIsPasswordLoading] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -162,6 +176,52 @@ export const ProfileScreen = () => {
       Alert.alert("Błąd zapisu", error.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handlePasswordChangeSubmit = async () => {
+    if (newPasswordInput.length < 6) {
+      Alert.alert("Błąd", "Hasło musi mieć co najmniej 6 znaków.");
+      return;
+    }
+    if (newPasswordInput !== confirmPasswordInput) {
+      Alert.alert("Błąd", "Hasła nie są identyczne.");
+      return;
+    }
+
+    setIsPasswordLoading(true);
+    try {
+      await updatePassword(newPasswordInput);
+      setIsPasswordModalVisible(false);
+      setNewPasswordInput("");
+      setConfirmPasswordInput("");
+      Alert.alert("Sukces", "Twoje hasło zostało pomyślnie zmienione.");
+    } catch (error: any) {
+      Alert.alert("Błąd", error.message);
+    } finally {
+      setIsPasswordLoading(false);
+    }
+  };
+
+  const handleEmailChangeSubmit = async () => {
+    if (!newEmail.includes("@")) {
+      Alert.alert("Błąd", "Wprowadź poprawny adres e-mail.");
+      return;
+    }
+
+    setIsEmailLoading(true);
+    try {
+      await updateEmail(newEmail.trim());
+      setIsEmailModalVisible(false);
+      setNewEmail("");
+      Alert.alert(
+        "Potwierdź zmianę",
+        "Wysłaliśmy linki potwierdzające na Twój stary oraz nowy adres e-mail. Musisz kliknąć w oba, aby zmiana weszła w życie.",
+      );
+    } catch (error: any) {
+      Alert.alert("Błąd", error.message);
+    } finally {
+      setIsEmailLoading(false);
     }
   };
 
@@ -291,12 +351,12 @@ export const ProfileScreen = () => {
             <SettingsRow
               icon="mail-outline"
               title="Zmień adres e-mail"
-              onPress={() => handleNotImplemented("Zmiana adresu e-mail")}
+              onPress={() => setIsEmailModalVisible(true)}
             />
             <SettingsRow
               icon="lock-closed-outline"
               title="Zmień hasło"
-              onPress={() => handleNotImplemented("Zmiana hasła")}
+              onPress={() => setIsPasswordModalVisible(true)}
             />
           </View>
         </View>
@@ -457,6 +517,162 @@ export const ProfileScreen = () => {
             </TouchableOpacity>
           </View>
         </ScrollView>
+      </Modal>
+      <Modal
+        visible={isEmailModalVisible}
+        animationType="fade"
+        transparent={true}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            justifyContent: "center",
+            padding: 20,
+          }}
+        >
+          <View
+            style={{ backgroundColor: "#fff", padding: 20, borderRadius: 12 }}
+          >
+            <Text
+              style={{ fontSize: 18, fontWeight: "bold", marginBottom: 15 }}
+            >
+              Zmień adres e-mail
+            </Text>
+            <Text style={{ color: "#666", marginBottom: 10 }}>
+              Wpisz nowy adres e-mail. Na oba adresy (stary i nowy) zostaną
+              wysłane linki potwierdzające.
+            </Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Nowy adres e-mail"
+              value={newEmail}
+              onChangeText={setNewEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+            />
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "flex-end",
+                marginTop: 20,
+              }}
+            >
+              <TouchableOpacity
+                onPress={() => setIsEmailModalVisible(false)}
+                style={{ padding: 10, marginRight: 10 }}
+              >
+                <Text style={{ color: "#666", fontWeight: "bold" }}>
+                  Anuluj
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleEmailChangeSubmit}
+                style={{
+                  backgroundColor: "#17a2b8",
+                  padding: 10,
+                  borderRadius: 8,
+                }}
+              >
+                {isEmailLoading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                    Zmień e-mail
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        visible={isPasswordModalVisible}
+        animationType="fade"
+        transparent={true}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            justifyContent: "center",
+            padding: 20,
+          }}
+        >
+          <View
+            style={{ backgroundColor: "#fff", padding: 20, borderRadius: 12 }}
+          >
+            <Text
+              style={{ fontSize: 18, fontWeight: "bold", marginBottom: 15 }}
+            >
+              Zmień hasło
+            </Text>
+            <Text style={{ color: "#666", marginBottom: 15 }}>
+              Wpisz i potwierdź swoje nowe hasło poniżej.
+            </Text>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Nowe hasło:</Text>
+              <TextInput
+                style={styles.input}
+                value={newPasswordInput}
+                onChangeText={setNewPasswordInput}
+                secureTextEntry
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Powtórz nowe hasło:</Text>
+              <TextInput
+                style={styles.input}
+                value={confirmPasswordInput}
+                onChangeText={setConfirmPasswordInput}
+                secureTextEntry
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "flex-end",
+                marginTop: 20,
+              }}
+            >
+              <TouchableOpacity
+                onPress={() => {
+                  setIsPasswordModalVisible(false);
+                  setNewPasswordInput("");
+                  setConfirmPasswordInput("");
+                }}
+                style={{ padding: 10, marginRight: 10 }}
+              >
+                <Text style={{ color: "#666", fontWeight: "bold" }}>
+                  Anuluj
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handlePasswordChangeSubmit}
+                style={{
+                  backgroundColor: "#17a2b8",
+                  padding: 10,
+                  borderRadius: 8,
+                  minWidth: 80,
+                  alignItems: "center",
+                }}
+              >
+                {isPasswordLoading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                    Zapisz
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </Modal>
     </View>
   );
