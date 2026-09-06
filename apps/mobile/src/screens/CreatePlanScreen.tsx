@@ -269,6 +269,13 @@ export const CreatePlanScreen = () => {
             </Text>
           </TouchableOpacity>
         </View>
+
+        <TouchableOpacity
+          style={styles.customPlanButton}
+          onPress={() => (navigation as any).navigate("WorkoutCreator")}
+        >
+          <Text style={styles.customPlanButtonText}>+ Stwórz własny plan</Text>
+        </TouchableOpacity>
       </ScrollView>
 
       <ExerciseSelectorModal
@@ -411,6 +418,25 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   addButtonText: { color: "#00838f", fontWeight: "bold" },
+
+  customPlanButton: {
+    backgroundColor: "#17a2b8",
+    padding: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 30,
+    marginBottom: 40,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+  },
+  customPlanButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 15,
+  },
 
   modalOverlay: {
     flex: 1,

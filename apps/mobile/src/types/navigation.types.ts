@@ -6,5 +6,7 @@ export type AuthStackParamList = {
 export type AppStackParamList = {
   MainTabs: undefined;
   CreatePlan: undefined;
+  WorkoutCreator: undefined;
   PlanDetails: { planId: string; planName: string };
+  CustomPlanDetails: { planId: string; planName: string };
 };

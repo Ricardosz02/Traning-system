@@ -7,11 +7,17 @@ import { AuthProvider, useAuth } from "./src/contexts/AuthContext";
 
 import { LoginScreen } from "./src/screens/LoginScreen";
 import { RegisterScreen } from "./src/screens/RegisterScreen";
-import { TabNavigator } from "./src/navigation/TabNavigator"; 
+import { TabNavigator } from "./src/navigation/TabNavigator";
 import { CreatePlanScreen } from "./src/screens/CreatePlanScreen";
-
-import { AuthStackParamList, AppStackParamList } from "./src/types/navigation.types";
+import { WorkoutCreatorScreen } from "./src/screens/WorkoutCreatorScreen";
 import { PlanDetailsScreen } from "./src/screens/PlanDetailsScreen";
+
+import { CustomPlanDetailsScreen } from "./src/screens/CustomPlanDetailsScreen";
+
+import {
+  AuthStackParamList,
+  AppStackParamList,
+} from "./src/types/navigation.types";
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const AppStack = createNativeStackNavigator<AppStackParamList>();
@@ -34,20 +40,34 @@ const NavigationWrapper = () => {
           <AppStack.Screen
             name="MainTabs"
             component={TabNavigator}
-            options={{ headerShown: false }} 
+            options={{ headerShown: false }}
           />
           <AppStack.Screen
             name="CreatePlan"
             component={CreatePlanScreen}
-            options={{ headerShown: false, presentation: 'modal' }} 
+            options={{ headerShown: false, presentation: "modal" }}
+          />
+          <AppStack.Screen
+            name="WorkoutCreator"
+            component={WorkoutCreatorScreen as any}
+            options={{ headerShown: false, presentation: "modal" }}
           />
           <AppStack.Screen
             name="PlanDetails"
             component={PlanDetailsScreen}
-            options={({ route }) => ({ 
+            options={({ route }) => ({
               title: route.params.planName,
-              headerBackTitle: 'Wstecz' 
-            })} 
+              headerBackTitle: "Wstecz",
+            })}
+          />
+
+          <AppStack.Screen
+            name="CustomPlanDetails"
+            component={CustomPlanDetailsScreen}
+            options={({ route }) => ({
+              title: route.params.planName,
+              headerBackTitle: "Wstecz",
+            })}
           />
         </AppStack.Navigator>
       ) : (

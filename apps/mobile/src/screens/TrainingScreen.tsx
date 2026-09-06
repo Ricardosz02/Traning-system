@@ -15,7 +15,11 @@ import { SetRow } from "../components/SetRow";
 import { ExerciseSelectorModal } from "../components/ExerciseSelectorModal";
 import { useAuth } from "../contexts/AuthContext";
 import { saveWorkoutSession } from "../services/workoutService";
-import { fetchUserDashboardData } from "../services/planService";
+import {
+  fetchUserDashboardData,
+  fetchCustomUserPlans,
+  fetchCustomWorkoutItems,
+} from "../services/planService";
 import { supabase } from "../lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import YoutubePlayer from "react-native-youtube-iframe";
@@ -38,6 +42,14 @@ const getYoutubeVideoId = (url?: string) => {
   return match && match[2].length === 11 ? match[2] : null;
 };
 
+interface DashboardPlan {
+  planId: string;
+  planName: string;
+  day: number;
+  exercises: any[];
+  isCustom: boolean;
+}
+
 export const TrainingScreen = () => {
   const navigation = useNavigation();
   const { user } = useAuth();
@@ -56,8 +68,8 @@ export const TrainingScreen = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(true);
 
-  const [todayPlans, setTodayPlans] = useState<any[]>([]);
-  const [otherPlans, setOtherPlans] = useState<any[]>([]);
+  const [todayPlans, setTodayPlans] = useState<DashboardPlan[]>([]);
+  const [otherPlans, setOtherPlans] = useState<DashboardPlan[]>([]);
 
   const [videoUrls, setVideoUrls] = useState<Record<string, string>>({});
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
@@ -114,12 +126,14 @@ export const TrainingScreen = () => {
     if (!user) return;
     setIsLoadingDashboard(true);
     try {
-      const data = await fetchUserDashboardData(user.id);
+      const standardData = await fetchUserDashboardData(user.id);
 
-      const todayTemp: any[] = [];
-      const otherTemp: any[] = [];
+      const customPlans = await fetchCustomUserPlans(user.id);
 
-      data?.forEach((plan) => {
+      const todayTemp: DashboardPlan[] = [];
+      const otherTemp: DashboardPlan[] = [];
+
+      standardData?.forEach((plan) => {
         const days = [
           ...new Set(plan.plan_exercises.map((pe: any) => pe.day_of_week)),
         ];
@@ -132,6 +146,7 @@ export const TrainingScreen = () => {
             exercises: plan.plan_exercises.filter(
               (pe: any) => pe.day_of_week === currentDayOfWeek,
             ),
+            isCustom: false,
           });
         }
 
@@ -144,10 +159,43 @@ export const TrainingScreen = () => {
               exercises: plan.plan_exercises.filter(
                 (pe: any) => pe.day_of_week === day,
               ),
+              isCustom: false,
             });
           }
         });
       });
+
+      for (const customPlan of customPlans) {
+        const items = await fetchCustomWorkoutItems(customPlan.id);
+
+        if (items && items.length > 0) {
+          const days = [...new Set(items.map((pe: any) => pe.day_of_week))];
+
+          if (days.includes(currentDayOfWeek)) {
+            todayTemp.push({
+              planId: customPlan.id,
+              planName: customPlan.name,
+              day: currentDayOfWeek,
+              exercises: items.filter(
+                (pe: any) => pe.day_of_week === currentDayOfWeek,
+              ),
+              isCustom: true,
+            });
+          }
+
+          days.forEach((day) => {
+            if (day !== currentDayOfWeek) {
+              otherTemp.push({
+                planId: customPlan.id,
+                planName: customPlan.name,
+                day: day as number,
+                exercises: items.filter((pe: any) => pe.day_of_week === day),
+                isCustom: true,
+              });
+            }
+          });
+        }
+      }
 
       setTodayPlans(todayTemp);
       setOtherPlans(otherTemp);
@@ -158,12 +206,27 @@ export const TrainingScreen = () => {
     }
   };
 
-  const handleStartFromDashboard = (planExercises: any[]) => {
-    const mapped = planExercises.map((item) => ({
-      exerciseId: item.exercise_id,
-      name: item.exercise?.name || "Nieznane ćwiczenie",
-      targetSets: item.target_sets || 3,
-    }));
+  const handleStartFromDashboard = (
+    planExercises: any[],
+    isCustom: boolean,
+  ) => {
+    const mapped = planExercises.map((item) => {
+      if (isCustom) {
+        return {
+          exerciseId: item.id,
+          name: item.exercise_name,
+          targetSets: parseInt(item.sets) || 3,
+          videoUrl: item.video_url,
+        };
+      } else {
+        return {
+          exerciseId: item.exercise_id,
+          name: item.exercise?.name || "Nieznane ćwiczenie",
+          targetSets: item.target_sets || 3,
+        };
+      }
+    });
+
     startWorkoutFromPlan(mapped);
   };
 
@@ -224,14 +287,30 @@ export const TrainingScreen = () => {
           </Text>
           {todayPlans.length > 0 ? (
             todayPlans.map((tp) => (
-              <View key={`${tp.planId}-${tp.day}`} style={styles.todayCard}>
-                <Text style={styles.todayCardTitle}>{tp.planName}</Text>
+              <View
+                key={`${tp.planId}-${tp.day}`}
+                style={[
+                  styles.todayCard,
+                  tp.isCustom && styles.customTodayCard,
+                ]}
+              >
+                <View style={styles.cardHeaderRow}>
+                  <Text style={styles.todayCardTitle}>{tp.planName}</Text>
+                  {tp.isCustom && (
+                    <Text style={styles.privateBadgeTextSmall}>🔒 Własny</Text>
+                  )}
+                </View>
                 <Text style={styles.todayCardDesc}>
                   {tp.exercises.length} ćwiczeń zaplanowanych na dzisiaj.
                 </Text>
                 <TouchableOpacity
-                  style={styles.startTodayButton}
-                  onPress={() => handleStartFromDashboard(tp.exercises)}
+                  style={[
+                    styles.startTodayButton,
+                    tp.isCustom && styles.customStartBtn,
+                  ]}
+                  onPress={() =>
+                    handleStartFromDashboard(tp.exercises, tp.isCustom)
+                  }
                 >
                   <Text style={styles.startTodayText}>
                     Rozpocznij {DAY_NAMES[currentDayOfWeek]}
@@ -249,6 +328,7 @@ export const TrainingScreen = () => {
             </View>
           )}
         </View>
+
         {otherPlans.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionHeader}>
@@ -257,11 +337,21 @@ export const TrainingScreen = () => {
             {otherPlans.map((op, index) => (
               <TouchableOpacity
                 key={`${op.planId}-${op.day}-${index}`}
-                style={styles.otherCard}
-                onPress={() => handleStartFromDashboard(op.exercises)}
+                style={[
+                  styles.otherCard,
+                  op.isCustom && styles.customOtherCard,
+                ]}
+                onPress={() =>
+                  handleStartFromDashboard(op.exercises, op.isCustom)
+                }
               >
-                <View>
-                  <Text style={styles.otherCardTitle}>{op.planName}</Text>
+                <View style={{ flex: 1 }}>
+                  <View style={styles.cardHeaderRow}>
+                    <Text style={styles.otherCardTitle}>{op.planName}</Text>
+                    {op.isCustom && (
+                      <Text style={styles.privateBadgeTextSmall}>🔒</Text>
+                    )}
+                  </View>
                   <Text style={styles.otherCardDesc}>
                     {DAY_NAMES[op.day]} • {op.exercises.length} ćwiczeń
                   </Text>
@@ -310,7 +400,8 @@ export const TrainingScreen = () => {
           ) : (
             exercises.map((ex) => {
               const realDbId = (ex as any).exerciseId || ex.id;
-              const hasVideo = !!videoUrls[realDbId];
+              const directVideoUrl = (ex as any).videoUrl;
+              const hasVideo = !!videoUrls[realDbId] || !!directVideoUrl;
 
               return (
                 <View key={ex.id} style={styles.exerciseCard}>
@@ -318,7 +409,20 @@ export const TrainingScreen = () => {
                     <Text style={styles.exerciseName}>{ex.name}</Text>
                     {hasVideo && (
                       <TouchableOpacity
-                        onPress={() => playExerciseVideo(realDbId, ex.name)}
+                        onPress={() => {
+                          const urlToPlay =
+                            directVideoUrl || videoUrls[realDbId];
+                          const vId = getYoutubeVideoId(urlToPlay);
+                          if (vId) {
+                            setActiveVideoTitle(ex.name);
+                            setActiveVideoId(vId);
+                          } else {
+                            Alert.alert(
+                              "Błąd",
+                              "Nie udało się rozpoznać linku YouTube.",
+                            );
+                          }
+                        }}
                       >
                         <Ionicons
                           name="play-circle"
@@ -443,6 +547,26 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
+  customTodayCard: {
+    borderLeftColor: "#f39c12",
+  },
+  cardHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  privateBadgeTextSmall: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#856404",
+    backgroundColor: "#fff3cd",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginLeft: 10,
+    overflow: "hidden",
+  },
+
   todayCardTitle: { fontSize: 20, fontWeight: "bold", color: "#333" },
   todayCardDesc: {
     fontSize: 14,
@@ -455,6 +579,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",
+  },
+  customStartBtn: {
+    backgroundColor: "#343a40",
   },
   startTodayText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
 
@@ -482,6 +609,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderWidth: 1,
     borderColor: "#eee",
+  },
+  customOtherCard: {
+    borderLeftWidth: 3,
+    borderLeftColor: "#f39c12",
   },
   otherCardTitle: { fontSize: 16, fontWeight: "bold", color: "#333" },
   otherCardDesc: { fontSize: 13, color: "#666", marginTop: 3 },
