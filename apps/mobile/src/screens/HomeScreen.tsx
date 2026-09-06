@@ -3,16 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   FlatList,
   ActivityIndicator,
   ListRenderItem,
-  StyleProp,
-  ViewStyle,
   RefreshControl,
 } from "react-native";
 import { useAuth } from "../contexts/AuthContext";
-import { signOut } from "../services/authService";
 import { fetchExercises, Exercise } from "../services/exerciseService";
 
 export const HomeScreen = () => {
@@ -65,9 +61,6 @@ export const HomeScreen = () => {
           <Text style={styles.title}>Witaj w systemie!</Text>
           <Text style={styles.email}>{user?.email}</Text>
         </View>
-        <TouchableOpacity style={styles.logoutButton} onPress={signOut}>
-          <Text style={styles.buttonText}>Wyloguj</Text>
-        </TouchableOpacity>
       </View>
 
       <View style={styles.listWrapper}>
@@ -80,7 +73,6 @@ export const HomeScreen = () => {
             data={exercises}
             keyExtractor={(item) => item.id}
             renderItem={renderExerciseItem}
-            // @ts-ignore
             contentContainerStyle={styles.listContainer}
             ListEmptyComponent={() => (
               <Text style={styles.emptyText}>Brak ćwiczeń w bazie.</Text>
@@ -123,13 +115,6 @@ const styles = StyleSheet.create({
     color: "#17a2b8",
     fontWeight: "bold",
   },
-  logoutButton: {
-    backgroundColor: "#dc3545",
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 8,
-  },
-  buttonText: { color: "#fff", fontWeight: "bold", fontSize: 14 },
   listWrapper: {
     flex: 1,
     padding: 20,
