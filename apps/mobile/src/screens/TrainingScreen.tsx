@@ -14,7 +14,10 @@ import { useWorkoutStore } from "../store/workoutStore";
 import { SetRow } from "../components/SetRow";
 import { ExerciseSelectorModal } from "../components/ExerciseSelectorModal";
 import { useAuth } from "../contexts/AuthContext";
-import { saveWorkoutSession } from "../services/workoutService";
+import {
+  saveWorkoutSession,
+  fetchLastExerciseSets,
+} from "../services/workoutService";
 import {
   fetchUserDashboardData,
   fetchCustomUserPlans,
@@ -206,28 +209,45 @@ export const TrainingScreen = () => {
     }
   };
 
-  const handleStartFromDashboard = (
+  const handleStartFromDashboard = async (
     planExercises: any[],
     isCustom: boolean,
   ) => {
-    const mapped = planExercises.map((item) => {
-      if (isCustom) {
-        return {
-          exerciseId: item.id,
-          name: item.exercise_name,
-          targetSets: parseInt(item.sets) || 3,
-          videoUrl: item.video_url,
-        };
-      } else {
-        return {
-          exerciseId: item.exercise_id,
-          name: item.exercise?.name || "Nieznane ćwiczenie",
-          targetSets: item.target_sets || 3,
-        };
-      }
-    });
+    if (!user) return;
 
-    startWorkoutFromPlan(mapped);
+    setIsLoadingDashboard(true);
+
+    try {
+      const mapped = await Promise.all(
+        planExercises.map(async (item) => {
+          const exerciseId = isCustom ? item.id : item.exercise_id;
+          const name = isCustom
+            ? item.exercise_name
+            : item.exercise?.name || "Nieznane ćwiczenie";
+          const targetSets = isCustom
+            ? parseInt(item.sets) || 3
+            : item.target_sets || 3;
+          const videoUrl = isCustom ? item.video_url : item.exercise?.video_url;
+
+          const history = await fetchLastExerciseSets(user.id, exerciseId);
+
+          return {
+            exerciseId,
+            name,
+            targetSets,
+            videoUrl,
+            historicalSets: history || undefined,
+          };
+        }),
+      );
+
+      startWorkoutFromPlan(mapped);
+    } catch (error) {
+      console.error("Błąd podczas ładowania historii ćwiczeń:", error);
+      Alert.alert("Błąd", "Nie udało się załadować planu.");
+    } finally {
+      setIsLoadingDashboard(false);
+    }
   };
 
   const handleFinishWorkout = async () => {
@@ -248,12 +268,20 @@ export const TrainingScreen = () => {
         new Date().toISOString(),
         exercises,
       );
-      Alert.alert("Sukces", "Trening został zapisany!");
-      endWorkout();
+
+      Alert.alert("Sukces", "Trening został zapisany!", [
+        {
+          text: "OK",
+          onPress: () => {
+            setIsSaving(false);
+            endWorkout();
+            loadDashboardData();
+          },
+        },
+      ]);
     } catch (error: any) {
-      Alert.alert("Błąd", error.message);
-    } finally {
       setIsSaving(false);
+      Alert.alert("Błąd", error.message);
     }
   };
 

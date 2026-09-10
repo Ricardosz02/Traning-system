@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
 export interface WorkoutSet {
   id: string;
@@ -15,23 +15,36 @@ export interface WorkoutExercise {
   sets: WorkoutSet[];
 }
 
-interface PlannedExerciseInput {
+export interface HistoricalSet {
+  weight: number;
+  reps: number;
+  rpe: number;
+}
+
+export interface PlannedExerciseInput {
   exerciseId: string;
   name: string;
   targetSets: number;
+  videoUrl?: string;
+  historicalSets?: HistoricalSet[];
 }
 
 interface WorkoutStore {
   isActive: boolean;
   startTime: Date | null;
   exercises: WorkoutExercise[];
-  
+
   startWorkout: () => void;
   startWorkoutFromPlan: (plannedExercises: PlannedExerciseInput[]) => void;
   endWorkout: () => void;
   addExercise: (exerciseId: string, name: string) => void;
   addSet: (exerciseId: string) => void;
-  updateSet: (exerciseId: string, setId: string, field: keyof WorkoutSet, value: number | boolean) => void;
+  updateSet: (
+    exerciseId: string,
+    setId: string,
+    field: keyof WorkoutSet,
+    value: number | boolean,
+  ) => void;
 }
 
 export const useWorkoutStore = create<WorkoutStore>((set) => ({
@@ -39,33 +52,45 @@ export const useWorkoutStore = create<WorkoutStore>((set) => ({
   startTime: null,
   exercises: [],
 
-  startWorkout: () => set({ isActive: true, startTime: new Date(), exercises: [] }),
-  
-  startWorkoutFromPlan: (plannedExercises) => 
-    set(() => {
-      const exercises: WorkoutExercise[] = plannedExercises.map((planEx, index) => {
-        const sets: WorkoutSet[] = Array.from({ length: planEx.targetSets }).map((_, setIndex) => ({
-          id: `${Date.now()}-${index}-${setIndex}`,
-          weight: 0,
-          reps: 0,
-          rpe: 8,
-          completed: false,
-        }));
+  startWorkout: () =>
+    set({ isActive: true, startTime: new Date(), exercises: [] }),
 
-        return {
-          id: `${Date.now()}-${index}`,
-          exerciseId: planEx.exerciseId,
-          name: planEx.name,
-          sets,
-        };
-      });
+  startWorkoutFromPlan: (plannedExercises) =>
+    set(() => {
+      const exercises: WorkoutExercise[] = plannedExercises.map(
+        (planEx, index) => {
+          const sets: WorkoutSet[] = Array.from({
+            length: planEx.targetSets,
+          }).map((_, setIndex) => {
+            const historySet = planEx.historicalSets?.[setIndex];
+            const fallbackSet =
+              planEx.historicalSets?.[planEx.historicalSets.length - 1];
+
+            return {
+              id: `${Date.now()}-${index}-${setIndex}`,
+              weight: historySet?.weight ?? fallbackSet?.weight ?? 0,
+              reps: historySet?.reps ?? fallbackSet?.reps ?? 0,
+              rpe: historySet?.rpe ?? fallbackSet?.rpe ?? 8,
+              completed: false,
+            };
+          });
+
+          return {
+            id: `${Date.now()}-${index}`,
+            exerciseId: planEx.exerciseId,
+            name: planEx.name,
+            sets,
+            videoUrl: planEx.videoUrl,
+          };
+        },
+      );
 
       return { isActive: true, startTime: new Date(), exercises };
     }),
 
   endWorkout: () => set({ isActive: false, startTime: null, exercises: [] }),
 
-  addExercise: (exerciseId, name) => 
+  addExercise: (exerciseId, name) =>
     set((state) => ({
       exercises: [
         ...state.exercises,
@@ -102,7 +127,9 @@ export const useWorkoutStore = create<WorkoutStore>((set) => ({
         if (ex.id === exerciseId) {
           return {
             ...ex,
-            sets: ex.sets.map((s) => (s.id === setId ? { ...s, [field]: value } : s)),
+            sets: ex.sets.map((s) =>
+              s.id === setId ? { ...s, [field]: value } : s,
+            ),
           };
         }
         return ex;
