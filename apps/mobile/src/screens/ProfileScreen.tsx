@@ -33,6 +33,7 @@ import {
   updateEmail,
   updatePassword,
 } from "../services/authService";
+import { useSettingsStore } from "../store/settingsStore";
 
 export const ProfileScreen = () => {
   const { user } = useAuth();
@@ -52,7 +53,7 @@ export const ProfileScreen = () => {
 
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [weightUnit, setWeightUnit] = useState<"kg" | "lbs">("kg");
+  const { weightUnit, setWeightUnit } = useSettingsStore();
 
   const [isEmailModalVisible, setIsEmailModalVisible] = useState(false);
   const [newEmail, setNewEmail] = useState("");

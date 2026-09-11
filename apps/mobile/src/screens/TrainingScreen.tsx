@@ -26,6 +26,7 @@ import {
 import { supabase } from "../lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import YoutubePlayer from "react-native-youtube-iframe";
+import { useSettingsStore } from "../store/settingsStore";
 
 const DAY_NAMES: Record<number, string> = {
   1: "Poniedziałek",
@@ -80,6 +81,8 @@ export const TrainingScreen = () => {
 
   const currentJsDay = new Date().getDay();
   const currentDayOfWeek = currentJsDay === 0 ? 7 : currentJsDay;
+
+  const { weightUnit } = useSettingsStore();
 
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
@@ -463,7 +466,9 @@ export const TrainingScreen = () => {
 
                   <View style={styles.columnHeaders}>
                     <Text style={styles.headerText}>Seria</Text>
-                    <Text style={styles.headerText}>Kg</Text>
+                    <Text style={styles.headerText}>
+                      {weightUnit === "kg" ? "Kg" : "Lbs"}
+                    </Text>
                     <Text style={styles.headerText}>Powt.</Text>
                     <Text style={styles.headerText}>RPE</Text>
                     <Text style={styles.headerText}>✔</Text>
