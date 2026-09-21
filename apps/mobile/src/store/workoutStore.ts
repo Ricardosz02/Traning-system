@@ -12,6 +12,8 @@ export interface WorkoutExercise {
   id: string;
   exerciseId: string;
   name: string;
+  videoUrl?: string;
+  restTime: number;
   sets: WorkoutSet[];
 }
 
@@ -26,6 +28,7 @@ export interface PlannedExerciseInput {
   name: string;
   targetSets: number;
   videoUrl?: string;
+  restTime?: number;
   historicalSets?: HistoricalSet[];
 }
 
@@ -33,6 +36,8 @@ interface WorkoutStore {
   isActive: boolean;
   startTime: Date | null;
   exercises: WorkoutExercise[];
+
+  activeTimerEndTime: number | null;
 
   startWorkout: () => void;
   startWorkoutFromPlan: (plannedExercises: PlannedExerciseInput[]) => void;
@@ -45,15 +50,24 @@ interface WorkoutStore {
     field: keyof WorkoutSet,
     value: number | boolean,
   ) => void;
+
+  stopTimer: () => void;
+  addTimeToTimer: (seconds: number) => void;
 }
 
 export const useWorkoutStore = create<WorkoutStore>((set) => ({
   isActive: false,
   startTime: null,
   exercises: [],
+  activeTimerEndTime: null,
 
   startWorkout: () =>
-    set({ isActive: true, startTime: new Date(), exercises: [] }),
+    set({
+      isActive: true,
+      startTime: new Date(),
+      exercises: [],
+      activeTimerEndTime: null,
+    }),
 
   startWorkoutFromPlan: (plannedExercises) =>
     set(() => {
@@ -79,16 +93,28 @@ export const useWorkoutStore = create<WorkoutStore>((set) => ({
             id: `${Date.now()}-${index}`,
             exerciseId: planEx.exerciseId,
             name: planEx.name,
-            sets,
             videoUrl: planEx.videoUrl,
+            restTime: planEx.restTime || 90,
+            sets,
           };
         },
       );
 
-      return { isActive: true, startTime: new Date(), exercises };
+      return {
+        isActive: true,
+        startTime: new Date(),
+        exercises,
+        activeTimerEndTime: null,
+      };
     }),
 
-  endWorkout: () => set({ isActive: false, startTime: null, exercises: [] }),
+  endWorkout: () =>
+    set({
+      isActive: false,
+      startTime: null,
+      exercises: [],
+      activeTimerEndTime: null,
+    }),
 
   addExercise: (exerciseId, name) =>
     set((state) => ({
@@ -98,6 +124,7 @@ export const useWorkoutStore = create<WorkoutStore>((set) => ({
           id: Date.now().toString(),
           exerciseId,
           name,
+          restTime: 90,
           sets: [],
         },
       ],
@@ -122,9 +149,15 @@ export const useWorkoutStore = create<WorkoutStore>((set) => ({
     })),
 
   updateSet: (exerciseId, setId, field, value) =>
-    set((state) => ({
-      exercises: state.exercises.map((ex) => {
+    set((state) => {
+      let newTimerEndTime = state.activeTimerEndTime;
+
+      const updatedExercises = state.exercises.map((ex) => {
         if (ex.id === exerciseId) {
+          if (field === "completed" && value === true) {
+            newTimerEndTime = Date.now() + ex.restTime * 1000;
+          }
+
           return {
             ...ex,
             sets: ex.sets.map((s) =>
@@ -133,6 +166,19 @@ export const useWorkoutStore = create<WorkoutStore>((set) => ({
           };
         }
         return ex;
-      }),
-    })),
+      });
+
+      return {
+        exercises: updatedExercises,
+        activeTimerEndTime: newTimerEndTime,
+      };
+    }),
+
+  stopTimer: () => set({ activeTimerEndTime: null }),
+
+  addTimeToTimer: (seconds) =>
+    set((state) => {
+      if (!state.activeTimerEndTime) return state;
+      return { activeTimerEndTime: state.activeTimerEndTime + seconds * 1000 };
+    }),
 }));

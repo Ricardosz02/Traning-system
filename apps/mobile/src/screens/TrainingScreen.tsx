@@ -27,6 +27,7 @@ import { supabase } from "../lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import YoutubePlayer from "react-native-youtube-iframe";
 import { useSettingsStore } from "../store/settingsStore";
+import { RestTimerBar } from "../components/RestTimerBar";
 
 const DAY_NAMES: Record<number, string> = {
   1: "Poniedziałek",
@@ -534,6 +535,7 @@ export const TrainingScreen = () => {
           </View>
         </View>
       </Modal>
+      <RestTimerBar />
     </View>
   );
 };
