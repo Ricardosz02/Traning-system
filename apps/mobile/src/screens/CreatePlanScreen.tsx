@@ -24,6 +24,7 @@ interface DraftExercise {
   day_of_week: number;
   target_sets: number;
   target_reps: string;
+  rest_time: number;
 }
 
 const DAYS = [
@@ -51,6 +52,7 @@ export const CreatePlanScreen = () => {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editSets, setEditSets] = useState("3");
   const [editReps, setEditReps] = useState("8-12");
+  const [editRestTime, setEditRestTime] = useState("90");
 
   const handleAddExercise = (exercise: Exercise) => {
     setDraftExercises((prev) => [
@@ -61,6 +63,7 @@ export const CreatePlanScreen = () => {
         day_of_week: selectedDay,
         target_sets: 3,
         target_reps: "8-12",
+        rest_time: 90,
       },
     ]);
   };
@@ -73,6 +76,7 @@ export const CreatePlanScreen = () => {
     const ex = draftExercises[index];
     setEditSets(ex.target_sets.toString());
     setEditReps(ex.target_reps);
+    setEditRestTime(ex.rest_time ? ex.rest_time.toString() : "90");
     setEditingIndex(index);
   };
 
@@ -80,6 +84,8 @@ export const CreatePlanScreen = () => {
     if (editingIndex === null) return;
 
     const parsedSets = parseInt(editSets);
+    const parsedRest = parseInt(editRestTime) || 90;
+
     if (isNaN(parsedSets) || parsedSets <= 0) {
       Alert.alert("Błąd", "Liczba serii musi być większa od 0.");
       return;
@@ -95,6 +101,7 @@ export const CreatePlanScreen = () => {
         ...updated[editingIndex],
         target_sets: parsedSets,
         target_reps: editReps.trim(),
+        rest_time: parsedRest,
       };
       return updated;
     });
@@ -129,6 +136,7 @@ export const CreatePlanScreen = () => {
         day_of_week: number;
         target_sets: number;
         target_reps: string;
+        rest_time: number;
         order_in_day: number;
       }> = [];
 
@@ -139,6 +147,7 @@ export const CreatePlanScreen = () => {
             day_of_week: ex.day_of_week,
             target_sets: ex.target_sets,
             target_reps: ex.target_reps,
+            rest_time: ex.rest_time,
             order_in_day: index + 1,
           });
         });
@@ -245,7 +254,8 @@ export const CreatePlanScreen = () => {
                 >
                   <Text style={styles.exName}>{ex.name}</Text>
                   <Text style={styles.exDetails}>
-                    Serie: {ex.target_sets} | Powtórzenia: {ex.target_reps}
+                    Serie: {ex.target_sets} | Powtórzenia: {ex.target_reps} |
+                    Przerwa: {ex.rest_time}s
                   </Text>
                   <Text style={styles.editHint}>Kliknij, aby edytować</Text>
                 </TouchableOpacity>
@@ -308,6 +318,15 @@ export const CreatePlanScreen = () => {
               style={styles.input}
               value={editReps}
               onChangeText={setEditReps}
+            />
+
+            <Text style={styles.label}>Przerwa (sekundy)</Text>
+            <TextInput
+              style={styles.input}
+              value={editRestTime}
+              onChangeText={setEditRestTime}
+              keyboardType="numeric"
+              placeholder="np. 90"
             />
 
             <View style={styles.modalButtons}>

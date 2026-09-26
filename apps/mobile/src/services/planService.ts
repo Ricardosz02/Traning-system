@@ -21,7 +21,7 @@ export const createPlanWithExercises = async (
   userId: string,
   name: string,
   description: string,
-  exercises: Omit<PlanExercise, "id" | "created_at" | "plan_id">[],
+  exercises: any[],
 ) => {
   const { data: plan, error: planError } = await supabase
     .from("training_plans")
@@ -83,6 +83,7 @@ export const fetchUserDashboardData = async (userId: string) => {
         target_sets,
         target_reps,
         exercise_id,
+        rest_time, 
         exercise:exercises (name)
       )
     `,
@@ -117,6 +118,7 @@ export const createCustomWorkoutPlan = async (
     video_url: ex.video_url,
     day_of_week: ex.day_of_week,
     order_index: index,
+    rest_time: parseInt(ex.rest_time) || 90,
   }));
 
   const { error: itemsError } = await supabase

@@ -88,6 +88,22 @@ export const SetRow = ({ exerciseId, item, index }: SetRowProps) => {
         />
       </View>
 
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={[styles.input, styles.timeInput]}
+          keyboardType="numeric"
+          value={
+            item.restTime === 0 || item.restTime === undefined
+              ? ""
+              : item.restTime.toString()
+          }
+          onChangeText={(text) => handleChange("restTime", text)}
+          placeholder="sek"
+          maxLength={4}
+          editable={!item.completed}
+        />
+      </View>
+
       <TouchableOpacity
         style={[styles.checkButton, item.completed && styles.checkButtonActive]}
         onPress={toggleComplete}
@@ -123,19 +139,23 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flex: 1,
-    marginHorizontal: 5,
+    marginHorizontal: 3,
   },
   input: {
     backgroundColor: "#f1f5f9",
     borderRadius: 6,
     paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     textAlign: "center",
-    fontSize: 16,
+    fontSize: 14,
     color: "#333",
   },
   rpeInput: {
     backgroundColor: "#e0f2fe",
+    fontWeight: "bold",
+  },
+  timeInput: {
+    backgroundColor: "#fef3c7",
     fontWeight: "bold",
   },
   checkButton: {

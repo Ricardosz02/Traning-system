@@ -134,7 +134,6 @@ export const TrainingScreen = () => {
     setIsLoadingDashboard(true);
     try {
       const standardData = await fetchUserDashboardData(user.id);
-
       const customPlans = await fetchCustomUserPlans(user.id);
 
       const todayTemp: DashboardPlan[] = [];
@@ -233,6 +232,8 @@ export const TrainingScreen = () => {
             : item.target_sets || 3;
           const videoUrl = isCustom ? item.video_url : item.exercise?.video_url;
 
+          const restTime = parseInt(item.rest_time) || 90;
+
           const history = await fetchLastExerciseSets(user.id, exerciseId);
 
           return {
@@ -240,6 +241,7 @@ export const TrainingScreen = () => {
             name,
             targetSets,
             videoUrl,
+            restTime,
             historicalSets: history || undefined,
           };
         }),
@@ -286,15 +288,6 @@ export const TrainingScreen = () => {
     } catch (error: any) {
       setIsSaving(false);
       Alert.alert("Błąd", error.message);
-    }
-  };
-
-  const playExerciseVideo = (exerciseId: string, exerciseName: string) => {
-    const videoUrl = videoUrls[exerciseId];
-    const videoId = getYoutubeVideoId(videoUrl);
-    if (videoId) {
-      setActiveVideoTitle(exerciseName);
-      setActiveVideoId(videoId);
     }
   };
 
@@ -472,6 +465,7 @@ export const TrainingScreen = () => {
                     </Text>
                     <Text style={styles.headerText}>Powt.</Text>
                     <Text style={styles.headerText}>RPE</Text>
+                    <Text style={styles.headerText}>⏱</Text>
                     <Text style={styles.headerText}>✔</Text>
                   </View>
 
@@ -548,7 +542,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8f9fa",
   },
   container: { flex: 1, backgroundColor: "#f8f9fa", paddingTop: 50 },
-
   dashboardContainer: {
     flex: 1,
     backgroundColor: "#f8f9fa",
@@ -569,7 +562,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     textTransform: "uppercase",
   },
-
   todayCard: {
     backgroundColor: "#fff",
     borderRadius: 12,
@@ -582,9 +574,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  customTodayCard: {
-    borderLeftColor: "#f39c12",
-  },
+  customTodayCard: { borderLeftColor: "#f39c12" },
   cardHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -601,7 +591,6 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     overflow: "hidden",
   },
-
   todayCardTitle: { fontSize: 20, fontWeight: "bold", color: "#333" },
   todayCardDesc: {
     fontSize: 14,
@@ -615,11 +604,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
   },
-  customStartBtn: {
-    backgroundColor: "#343a40",
-  },
+  customStartBtn: { backgroundColor: "#343a40" },
   startTodayText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-
   restDayCard: {
     backgroundColor: "#e9ecef",
     borderRadius: 12,
@@ -633,7 +619,6 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   restDayDesc: { fontSize: 14, color: "#6c757d", textAlign: "center" },
-
   otherCard: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -645,14 +630,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#eee",
   },
-  customOtherCard: {
-    borderLeftWidth: 3,
-    borderLeftColor: "#f39c12",
-  },
+  customOtherCard: { borderLeftWidth: 3, borderLeftColor: "#f39c12" },
   otherCardTitle: { fontSize: 16, fontWeight: "bold", color: "#333" },
   otherCardDesc: { fontSize: 13, color: "#666", marginTop: 3 },
   arrowIcon: { fontSize: 20, color: "#adb5bd" },
-
   divider: { height: 1, backgroundColor: "#dee2e6", marginVertical: 15 },
   freeWorkoutButton: {
     backgroundColor: "#e2e8f0",
@@ -661,7 +642,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   freeWorkoutText: { color: "#495057", fontWeight: "bold", fontSize: 15 },
-
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -690,7 +670,6 @@ const styles = StyleSheet.create({
   secondaryButtonText: { color: "#333", fontWeight: "bold", fontSize: 16 },
   workoutArea: { flex: 1 },
   emptyText: { textAlign: "center", color: "#666", marginTop: 50 },
-
   exerciseCard: {
     backgroundColor: "#fff",
     padding: 15,
@@ -710,7 +689,6 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   exerciseName: { fontSize: 18, fontWeight: "bold", color: "#333", flex: 1 },
-
   columnHeaders: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -722,7 +700,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#999",
     fontWeight: "bold",
-    width: 40,
+    width: 38,
     textAlign: "center",
   },
   addSetButton: {
@@ -733,7 +711,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   addSetText: { color: "#17a2b8", fontWeight: "bold" },
-
   videoOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.8)",

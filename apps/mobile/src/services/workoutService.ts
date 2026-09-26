@@ -45,7 +45,7 @@ export const saveWorkoutSession = async (
 
         if (newExError) {
           throw new Error(
-            `Błąd tworzenia ćwiczenia w słowniku. Sprawdź, czy tabela 'exercises' nie wymaga podania kategorii. Komunikat: ${newExError.message}`,
+            `Błąd tworzenia ćwiczenia w słowniku. Komunikat: ${newExError.message}`,
           );
         }
         realExerciseIds[ex.exerciseId] = newEx.id;
@@ -83,6 +83,7 @@ export const saveWorkoutSession = async (
           weight: set.weight,
           reps: set.reps,
           rpe: set.rpe,
+          rest_time: set.restTime || 90,
           set_order: index + 1,
         });
       }
@@ -153,14 +154,20 @@ export const fetchLastExerciseSets = async (
 
     const { data: sets, error: setsError } = await supabase
       .from("workout_sets")
-      .select("weight, reps, rpe, set_order")
+      .select("weight, reps, rpe, set_order, rest_time")
       .eq("workout_id", lastWorkoutId)
       .eq("exercise_id", searchExerciseId)
       .order("set_order", { ascending: true });
 
     if (setsError) throw setsError;
 
-    return sets;
+    return sets.map((s) => ({
+      weight: s.weight,
+      reps: s.reps,
+      rpe: s.rpe,
+      set_order: s.set_order,
+      restTime: s.rest_time,
+    }));
   } catch (error) {
     console.error("Błąd podczas pobierania historii ćwiczenia:", error);
     return null;

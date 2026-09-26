@@ -5,6 +5,7 @@ export interface WorkoutSet {
   weight: number;
   reps: number;
   rpe: number;
+  restTime: number;
   completed: boolean;
 }
 
@@ -21,6 +22,7 @@ export interface HistoricalSet {
   weight: number;
   reps: number;
   rpe: number;
+  restTime?: number;
 }
 
 export interface PlannedExerciseInput {
@@ -36,7 +38,6 @@ interface WorkoutStore {
   isActive: boolean;
   startTime: Date | null;
   exercises: WorkoutExercise[];
-
   activeTimerEndTime: number | null;
 
   startWorkout: () => void;
@@ -48,7 +49,7 @@ interface WorkoutStore {
     exerciseId: string,
     setId: string,
     field: keyof WorkoutSet,
-    value: number | boolean,
+    value: number | boolean | string,
   ) => void;
 
   stopTimer: () => void;
@@ -85,6 +86,11 @@ export const useWorkoutStore = create<WorkoutStore>((set) => ({
               weight: historySet?.weight ?? fallbackSet?.weight ?? 0,
               reps: historySet?.reps ?? fallbackSet?.reps ?? 0,
               rpe: historySet?.rpe ?? fallbackSet?.rpe ?? 8,
+              restTime:
+                planEx.restTime ??
+                historySet?.restTime ??
+                fallbackSet?.restTime ??
+                90,
               completed: false,
             };
           });
@@ -140,6 +146,7 @@ export const useWorkoutStore = create<WorkoutStore>((set) => ({
             weight: lastSet ? lastSet.weight : 0,
             reps: lastSet ? lastSet.reps : 0,
             rpe: lastSet ? lastSet.rpe : 8,
+            restTime: lastSet ? lastSet.restTime : ex.restTime || 90,
             completed: false,
           };
           return { ...ex, sets: [...ex.sets, newSet] };
@@ -155,7 +162,9 @@ export const useWorkoutStore = create<WorkoutStore>((set) => ({
       const updatedExercises = state.exercises.map((ex) => {
         if (ex.id === exerciseId) {
           if (field === "completed" && value === true) {
-            newTimerEndTime = Date.now() + ex.restTime * 1000;
+            const targetSet = ex.sets.find((s) => s.id === setId);
+            const timeToUse = targetSet?.restTime || ex.restTime || 90;
+            newTimerEndTime = Date.now() + timeToUse * 1000;
           }
 
           return {

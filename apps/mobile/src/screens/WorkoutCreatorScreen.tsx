@@ -30,6 +30,7 @@ interface ExerciseItem {
   exercise_name: string;
   sets: string;
   reps: string;
+  rest_time: string;
   video_url: string;
   day_of_week: number;
 }
@@ -50,6 +51,7 @@ export const WorkoutCreatorScreen = () => {
         exercise_name: "",
         sets: "",
         reps: "",
+        rest_time: "90",
         video_url: "",
         day_of_week: selectedDay,
       },
@@ -197,6 +199,7 @@ export const WorkoutCreatorScreen = () => {
                     onChangeText={(text) =>
                       updateExercise(exercise.id, "sets", text)
                     }
+                    keyboardType="numeric"
                   />
                   <TextInput
                     style={[styles.input, styles.halfInput]}
@@ -207,6 +210,16 @@ export const WorkoutCreatorScreen = () => {
                     }
                   />
                 </View>
+
+                <TextInput
+                  style={styles.input}
+                  placeholder="Przerwa w sekundach (np. 90)"
+                  value={exercise.rest_time}
+                  onChangeText={(text) =>
+                    updateExercise(exercise.id, "rest_time", text)
+                  }
+                  keyboardType="numeric"
+                />
 
                 <TextInput
                   style={styles.input}
