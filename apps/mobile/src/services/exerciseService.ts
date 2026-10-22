@@ -7,6 +7,7 @@ export interface Exercise {
   description: string;
   category: string;
   video_url?: string;
+  target_muscles?: string[];
 }
 
 export const fetchExercises = async (): Promise<Exercise[]> => {

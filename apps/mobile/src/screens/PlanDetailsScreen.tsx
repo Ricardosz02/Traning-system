@@ -15,6 +15,7 @@ import { AppStackParamList } from "../types/navigation.types";
 import { useWorkoutStore } from "../store/workoutStore";
 import { Ionicons } from "@expo/vector-icons";
 import YoutubePlayer from "react-native-youtube-iframe";
+import { MuscleMap } from "../components/MuscleMap";
 
 type PlanDetailsRouteProp = RouteProp<AppStackParamList, "PlanDetails">;
 
@@ -128,50 +129,64 @@ export const PlanDetailsScreen = () => {
             Ten plan nie ma przypisanych żadnych ćwiczeń.
           </Text>
         ) : (
-          activeDays.map((day) => (
-            <View key={day} style={styles.dayContainer}>
-              <Text style={styles.dayTitle}>{DAY_NAMES[day]}</Text>
+          activeDays.map((day) => {
+            const dayMuscles = Array.from(
+              new Set(
+                exercisesByDay[day].flatMap(
+                  (item) => item.exercise?.target_muscles || [],
+                ),
+              ),
+            );
 
-              {exercisesByDay[day].map((item, index) => {
-                const hasVideo = !!getYoutubeVideoId(item.exercise?.video_url);
-                return (
-                  <TouchableOpacity
-                    key={item.id}
-                    style={styles.exerciseRow}
-                    onPress={() => handleExerciseClick(item)}
-                  >
-                    <View style={styles.orderCircle}>
-                      <Text style={styles.orderText}>{index + 1}</Text>
-                    </View>
-                    <View style={styles.exerciseInfo}>
-                      <Text style={styles.exerciseName}>
-                        {item.exercise?.name || "Nieznane ćwiczenie"}
-                      </Text>
-                      <Text style={styles.exerciseDetails}>
-                        Serie: {item.target_sets} | Powtórzenia:{" "}
-                        {item.target_reps || "Brak"}
-                      </Text>
-                    </View>
-                    {hasVideo && (
-                      <Ionicons
-                        name="play-circle"
-                        size={28}
-                        color="#e11d48"
-                        style={{ marginLeft: 10 }}
-                      />
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
+            return (
+              <View key={day} style={styles.dayContainer}>
+                <Text style={styles.dayTitle}>{DAY_NAMES[day]}</Text>
 
-              <TouchableOpacity
-                style={styles.startButton}
-                onPress={() => handleStartWorkout(day)}
-              >
-                <Text style={styles.startButtonText}>Rozpocznij trening</Text>
-              </TouchableOpacity>
-            </View>
-          ))
+                {exercisesByDay[day].map((item, index) => {
+                  const hasVideo = !!getYoutubeVideoId(
+                    item.exercise?.video_url,
+                  );
+                  return (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={styles.exerciseRow}
+                      onPress={() => handleExerciseClick(item)}
+                    >
+                      <View style={styles.orderCircle}>
+                        <Text style={styles.orderText}>{index + 1}</Text>
+                      </View>
+                      <View style={styles.exerciseInfo}>
+                        <Text style={styles.exerciseName}>
+                          {item.exercise?.name || "Nieznane ćwiczenie"}
+                        </Text>
+                        <Text style={styles.exerciseDetails}>
+                          Serie: {item.target_sets} | Powtórzenia:{" "}
+                          {item.target_reps || "Brak"}
+                        </Text>
+                      </View>
+                      {hasVideo && (
+                        <Ionicons
+                          name="play-circle"
+                          size={28}
+                          color="#e11d48"
+                          style={{ marginLeft: 10 }}
+                        />
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+
+                <MuscleMap activeMuscles={dayMuscles} />
+
+                <TouchableOpacity
+                  style={styles.startButton}
+                  onPress={() => handleStartWorkout(day)}
+                >
+                  <Text style={styles.startButtonText}>Rozpocznij trening</Text>
+                </TouchableOpacity>
+              </View>
+            );
+          })
         )}
       </ScrollView>
 
@@ -259,10 +274,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",
-    marginTop: 15,
+    marginTop: 25,
   },
   startButtonText: { color: "#fff", fontWeight: "bold", fontSize: 15 },
-
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.8)",
