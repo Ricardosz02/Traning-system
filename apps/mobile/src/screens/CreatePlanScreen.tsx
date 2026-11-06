@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { useAuth } from "../contexts/AuthContext";
 import { createPlanWithExercises } from "../services/planService";
 import { ExerciseSelectorModal } from "../components/ExerciseSelectorModal";
@@ -37,8 +37,17 @@ const DAYS = [
   { id: 7, name: "Nie" },
 ];
 
+const generateTempUUID = () => {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
 export const CreatePlanScreen = () => {
   const navigation = useNavigation();
+  const route = useRoute<any>();
   const { user } = useAuth();
 
   const [planName, setPlanName] = useState("");
@@ -53,6 +62,27 @@ export const CreatePlanScreen = () => {
   const [editSets, setEditSets] = useState("3");
   const [editReps, setEditReps] = useState("8-12");
   const [editRestTime, setEditRestTime] = useState("90");
+
+  useEffect(() => {
+    if (route.params?.generatedPlan && route.params?.isFromAI) {
+      const aiExercises: DraftExercise[] = route.params.generatedPlan.map(
+        (ex: any, index: number) => ({
+          exercise_id: ex.exercise_id,
+          name: ex.name,
+          day_of_week: selectedDay,
+          target_sets: ex.target_sets,
+          target_reps: ex.target_reps,
+          rest_time: ex.rest_time || 90,
+        }),
+      );
+
+      setDraftExercises((prev) => [...prev, ...aiExercises]);
+      (navigation as any).setParams({
+        generatedPlan: undefined,
+        isFromAI: undefined,
+      });
+    }
+  }, [route.params?.generatedPlan, selectedDay, navigation]);
 
   const handleAddExercise = (exercise: Exercise) => {
     setDraftExercises((prev) => [
@@ -286,6 +316,13 @@ export const CreatePlanScreen = () => {
         >
           <Text style={styles.customPlanButtonText}>+ Stwórz własny plan</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.aiButton}
+          onPress={() => (navigation as any).navigate("AiGeneratorScreen")}
+        >
+          <Text style={styles.aiButtonText}>Wygeneruj plan z AI</Text>
+        </TouchableOpacity>
       </ScrollView>
 
       <ExerciseSelectorModal
@@ -412,7 +449,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: "center",
   },
-
   exerciseCardWrapper: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -437,14 +473,13 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   addButtonText: { color: "#00838f", fontWeight: "bold" },
-
   customPlanButton: {
     backgroundColor: "#17a2b8",
     padding: 16,
     borderRadius: 8,
     alignItems: "center",
     marginTop: 30,
-    marginBottom: 40,
+    marginBottom: 15,
     elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -456,7 +491,23 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 15,
   },
-
+  aiButton: {
+    backgroundColor: "#2845eb",
+    padding: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 40,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+  },
+  aiButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 15,
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",

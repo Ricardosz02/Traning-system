@@ -14,6 +14,8 @@ import { PlanDetailsScreen } from "./src/screens/PlanDetailsScreen";
 
 import { CustomPlanDetailsScreen } from "./src/screens/CustomPlanDetailsScreen";
 
+import AiGeneratorScreen from "./src/screens/AiGeneratorScreen";
+
 import {
   AuthStackParamList,
   AppStackParamList,
@@ -50,6 +52,11 @@ const NavigationWrapper = () => {
           <AppStack.Screen
             name="WorkoutCreator"
             component={WorkoutCreatorScreen as any}
+            options={{ headerShown: false, presentation: "modal" }}
+          />
+          <AppStack.Screen
+            name={"AiGeneratorScreen" as keyof AppStackParamList}
+            component={AiGeneratorScreen as any}
             options={{ headerShown: false, presentation: "modal" }}
           />
           <AppStack.Screen
