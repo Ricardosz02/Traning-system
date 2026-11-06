@@ -7,11 +7,16 @@ import {
   FlatList,
   ActivityIndicator,
   RefreshControl,
+  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useAuth } from "../contexts/AuthContext";
-import { fetchUserPlans, fetchCustomUserPlans } from "../services/planService";
+import {
+  fetchUserPlans,
+  fetchCustomUserPlans,
+  deletePlan,
+} from "../services/planService";
 import { AppStackParamList } from "../types/navigation.types";
 
 type CombinedPlan = {
@@ -84,6 +89,31 @@ export const PlansScreen = () => {
     loadPlans();
   };
 
+  const handleDeletePlan = (planId: string, planName: string) => {
+    Alert.alert(
+      "Usuwanie planu",
+      `Czy na pewno chcesz usunąć plan "${planName}"? Tej operacji nie można cofnąć.`,
+      [
+        { text: "Anuluj", style: "cancel" },
+        {
+          text: "Usuń",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await deletePlan(planId);
+              Alert.alert("Sukces", "Plan został usunięty.");
+              loadPlans();
+            } catch (error) {
+              Alert.alert("Błąd", "Nie udało się usunąć planu.");
+              setLoading(false);
+            }
+          },
+        },
+      ],
+    );
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -137,14 +167,25 @@ export const PlansScreen = () => {
               }}
             >
               <View style={styles.cardHeader}>
-                <Text style={styles.cardTitle}>{item.name}</Text>
-                {item.isCustom && (
-                  <View style={styles.privateBadge}>
-                    <Text style={styles.privateBadgeText}>
-                      Własny (Prywatny)
-                    </Text>
-                  </View>
-                )}
+                <View style={styles.titleAndBadge}>
+                  <Text style={styles.cardTitle} numberOfLines={1}>
+                    {item.name}
+                  </Text>
+                  {item.isCustom && (
+                    <View style={styles.privateBadge}>
+                      <Text style={styles.privateBadgeText}>
+                        Własny (Prywatny)
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                <TouchableOpacity
+                  style={styles.deleteButton}
+                  onPress={() => handleDeletePlan(item.id, item.name)}
+                >
+                  <Text style={styles.deleteButtonText}>Usuń</Text>
+                </TouchableOpacity>
               </View>
 
               <Text style={styles.cardDescription}>{item.description}</Text>
@@ -201,11 +242,19 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: 5,
   },
-  cardTitle: { fontSize: 18, fontWeight: "bold", color: "#333", flex: 1 },
-
+  titleAndBadge: {
+    flex: 1,
+    marginRight: 10,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 4,
+  },
   privateBadge: {
     backgroundColor: "#fff3cd",
     paddingVertical: 4,
@@ -213,13 +262,24 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     borderWidth: 1,
     borderColor: "#ffeeba",
+    alignSelf: "flex-start",
   },
   privateBadgeText: {
     fontSize: 10,
     fontWeight: "bold",
     color: "#856404",
   },
-
+  deleteButton: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    backgroundColor: "#ffeeee",
+    borderRadius: 6,
+  },
+  deleteButtonText: {
+    color: "#dc3545",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
   cardDescription: { fontSize: 14, color: "#666", marginBottom: 10 },
   cardDate: { fontSize: 12, color: "#999", textAlign: "right" },
   emptyText: {

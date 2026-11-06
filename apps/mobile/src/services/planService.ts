@@ -152,3 +152,21 @@ export const fetchCustomWorkoutItems = async (workoutId: string) => {
   if (error) throw error;
   return data;
 };
+
+export const deletePlan = async (planId: string) => {
+  try {
+    const { error } = await supabase
+      .from("training_plans")
+      .delete()
+      .eq("id", planId);
+
+    if (error) {
+      throw error;
+    }
+
+    return true;
+  } catch (error: any) {
+    console.error("Błąd podczas usuwania planu:", error.message);
+    throw new Error("Nie udało się usunąć planu.");
+  }
+};
