@@ -7,14 +7,21 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  SafeAreaView,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { signUp } from "../services/authService";
+import { useThemeStore } from "../store/themeStore";
+import { colors } from "../theme/colors";
 
 export const RegisterScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const { isDarkMode } = useThemeStore();
+  const theme = isDarkMode ? colors.dark : colors.light;
 
   const handleRegister = async () => {
     const sanitizedEmail = email
@@ -53,51 +60,89 @@ export const RegisterScreen = ({ navigation }: any) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Dołącz do nas</Text>
-      <Text style={styles.subtitle}>Załóż darmowe konto treningowe</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={24} color={theme.text} />
+        </TouchableOpacity>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Adres e-mail"
-        placeholderTextColor="#999"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        autoCorrect={false}
-        value={email}
-        onChangeText={setEmail}
-      />
+        <Text style={[styles.title, { color: theme.text }]}>Dołącz do nas</Text>
+        <Text style={[styles.subtitle, { color: theme.textMuted }]}>
+          Załóż darmowe konto treningowe
+        </Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Hasło (min. 6 znaków)"
-        placeholderTextColor="#999"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+        <TextInput
+          style={[
+            styles.input,
+            {
+              backgroundColor: theme.surface,
+              borderColor: theme.border,
+              color: theme.text,
+            },
+          ]}
+          placeholder="Adres e-mail"
+          placeholderTextColor={theme.textMuted}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          value={email}
+          onChangeText={setEmail}
+        />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Powtórz hasło"
-        placeholderTextColor="#999"
-        secureTextEntry
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-      />
+        <TextInput
+          style={[
+            styles.input,
+            {
+              backgroundColor: theme.surface,
+              borderColor: theme.border,
+              color: theme.text,
+            },
+          ]}
+          placeholder="Hasło (min. 6 znaków)"
+          placeholderTextColor={theme.textMuted}
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+        />
 
-      <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={handleRegister}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.buttonText}>Zarejestruj się</Text>
-        )}
-      </TouchableOpacity>
-    </View>
+        <TextInput
+          style={[
+            styles.input,
+            {
+              backgroundColor: theme.surface,
+              borderColor: theme.border,
+              color: theme.text,
+            },
+          ]}
+          placeholder="Powtórz hasło"
+          placeholderTextColor={theme.textMuted}
+          secureTextEntry
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+        />
+
+        <TouchableOpacity
+          style={[
+            styles.button,
+            { backgroundColor: theme.primary },
+            loading && { opacity: 0.7 },
+          ]}
+          onPress={handleRegister}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color={theme.primaryText} />
+          ) : (
+            <Text style={[styles.buttonText, { color: theme.primaryText }]}>
+              Zarejestruj się
+            </Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 };
 
@@ -106,40 +151,37 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     padding: 20,
-    backgroundColor: "#fff",
+  },
+  backButton: {
+    position: "absolute",
+    top: 15,
+    left: 20,
+    zIndex: 10,
+    padding: 8,
   },
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#333",
     marginBottom: 5,
   },
   subtitle: {
     fontSize: 16,
-    color: "#666",
     marginBottom: 30,
   },
   input: {
-    backgroundColor: "#f5f5f5",
     padding: 15,
     borderRadius: 8,
     marginBottom: 15,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: "#eee",
   },
   button: {
-    backgroundColor: "#17a2b8",
     padding: 15,
     borderRadius: 8,
     alignItems: "center",
     marginTop: 10,
   },
-  buttonDisabled: {
-    backgroundColor: "#93d3dd",
-  },
   buttonText: {
-    color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
   },

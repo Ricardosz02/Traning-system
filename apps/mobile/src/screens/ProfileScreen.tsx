@@ -13,6 +13,7 @@ import {
   Switch,
   Modal,
   Linking,
+  SafeAreaView,
 } from "react-native";
 import DateTimePicker, {
   DateTimePickerEvent,
@@ -34,10 +35,15 @@ import {
   updatePassword,
 } from "../services/authService";
 import { useSettingsStore } from "../store/settingsStore";
+import { useThemeStore } from "../store/themeStore";
+import { colors } from "../theme/colors";
 
 export const ProfileScreen = () => {
   const { user } = useAuth();
   const navigation = useNavigation<any>();
+
+  const { isDarkMode, toggleTheme } = useThemeStore();
+  const theme = isDarkMode ? colors.dark : colors.light;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -52,7 +58,6 @@ export const ProfileScreen = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const { weightUnit, setWeightUnit } = useSettingsStore();
 
   const [isEmailModalVisible, setIsEmailModalVisible] = useState(false);
@@ -156,7 +161,7 @@ export const ProfileScreen = () => {
     const parsedHeight = height ? parseInt(height, 10) : null;
 
     if (weight && isNaN(parsedWeight as number)) {
-      Alert.alert("Błąd walidacji", "Waga musi być wartością liczbowową.");
+      Alert.alert("Błąd walidacji", "Waga musi być wartością liczbową.");
       return;
     }
 
@@ -255,8 +260,10 @@ export const ProfileScreen = () => {
 
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#17a2b8" />
+      <View
+        style={[styles.centerContainer, { backgroundColor: theme.background }]}
+      >
+        <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
   }
@@ -270,7 +277,7 @@ export const ProfileScreen = () => {
     isDestructive = false,
   }: any) => (
     <TouchableOpacity
-      style={styles.settingsRow}
+      style={[styles.settingsRow, { borderBottomColor: theme.border }]}
       onPress={onPress}
       disabled={!onPress}
     >
@@ -278,61 +285,102 @@ export const ProfileScreen = () => {
         <Ionicons
           name={icon}
           size={22}
-          color={isDestructive ? "#e11d48" : "#555"}
+          color={isDestructive ? theme.danger : theme.textMuted}
           style={styles.settingsIcon}
         />
         <Text
           style={[
             styles.settingsTitle,
-            isDestructive && styles.destructiveText,
+            { color: theme.text },
+            isDestructive && { color: theme.danger, fontWeight: "bold" },
           ]}
         >
           {title}
         </Text>
       </View>
       <View style={styles.settingsRowRight}>
-        {value && <Text style={styles.settingsValue}>{value}</Text>}
+        {value && (
+          <Text style={[styles.settingsValue, { color: theme.textMuted }]}>
+            {value}
+          </Text>
+        )}
         {rightElement
           ? rightElement
           : onPress && (
-              <Ionicons name="chevron-forward" size={20} color="#ccc" />
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={theme.textMuted}
+              />
             )}
       </View>
     </TouchableOpacity>
   );
 
   return (
-    <View style={styles.container}>
-      <ScrollView>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Twój Profil</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.surface }}>
+      <ScrollView
+        style={[styles.container, { backgroundColor: theme.background }]}
+      >
+        <View
+          style={[
+            styles.header,
+            { backgroundColor: theme.surface, borderBottomColor: theme.border },
+          ]}
+        >
+          <Text style={[styles.headerTitle, { color: theme.text }]}>
+            Twój Profil
+          </Text>
         </View>
-        <View style={styles.profileHeader}>
+        <View
+          style={[
+            styles.profileHeader,
+            { backgroundColor: theme.surface, borderBottomColor: theme.border },
+          ]}
+        >
           <TouchableOpacity
             onPress={handlePickImage}
             activeOpacity={0.8}
             style={styles.avatarContainer}
           >
             {avatarUrl ? (
-              <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+              <Image
+                source={{ uri: avatarUrl }}
+                style={[styles.avatar, { borderColor: theme.primary }]}
+              />
             ) : (
-              <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                <Ionicons name="person" size={50} color="#adb5bd" />
+              <View
+                style={[
+                  styles.avatar,
+                  styles.avatarPlaceholder,
+                  { borderColor: theme.primary },
+                ]}
+              >
+                <Ionicons name="person" size={50} color={theme.textMuted} />
               </View>
             )}
-            <View style={styles.cameraBadge}>
-              <Ionicons name="camera" size={14} color="#fff" />
+            <View
+              style={[
+                styles.cameraBadge,
+                { backgroundColor: theme.primary, borderColor: theme.surface },
+              ]}
+            >
+              <Ionicons name="camera" size={14} color={theme.primaryText} />
             </View>
           </TouchableOpacity>
-          <Text style={styles.userName}>
+          <Text style={[styles.userName, { color: theme.text }]}>
             {profileData?.display_name || "Użytkownik"}
           </Text>
-          <Text style={styles.userEmail}>{user?.email}</Text>
+          <Text style={[styles.userEmail, { color: theme.textMuted }]}>
+            {user?.email}
+          </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionHeader}>AKTYWNOŚĆ</Text>
-          <View style={styles.card}>
+          <Text style={[styles.sectionHeader, { color: theme.textMuted }]}>
+            AKTYWNOŚĆ
+          </Text>
+          <View style={[styles.card, { backgroundColor: theme.surface }]}>
             <SettingsRow
               icon="body-outline"
               title="Moje Wymiary"
@@ -342,8 +390,10 @@ export const ProfileScreen = () => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionHeader}>KONTO</Text>
-          <View style={styles.card}>
+          <Text style={[styles.sectionHeader, { color: theme.textMuted }]}>
+            KONTO
+          </Text>
+          <View style={[styles.card, { backgroundColor: theme.surface }]}>
             <SettingsRow
               icon="person-outline"
               title="Edytuj dane profilowe"
@@ -363,8 +413,10 @@ export const ProfileScreen = () => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionHeader}>PREFERENCJE TRENINGOWE</Text>
-          <View style={styles.card}>
+          <Text style={[styles.sectionHeader, { color: theme.textMuted }]}>
+            PREFERENCJE TRENINGOWE
+          </Text>
+          <View style={[styles.card, { backgroundColor: theme.surface }]}>
             <SettingsRow
               icon="barbell-outline"
               title="Jednostka wagi"
@@ -375,16 +427,19 @@ export const ProfileScreen = () => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionHeader}>WYGLĄD</Text>
-          <View style={styles.card}>
+          <Text style={[styles.sectionHeader, { color: theme.textMuted }]}>
+            WYGLĄD
+          </Text>
+          <View style={[styles.card, { backgroundColor: theme.surface }]}>
             <SettingsRow
               icon="moon-outline"
               title="Tryb ciemny (Dark Mode)"
               rightElement={
                 <Switch
                   value={isDarkMode}
-                  onValueChange={(val) => setIsDarkMode(val)}
-                  trackColor={{ false: "#e9ecef", true: "#17a2b8" }}
+                  onValueChange={toggleTheme}
+                  trackColor={{ false: "#767577", true: theme.primary }}
+                  thumbColor={Platform.OS === "ios" ? "#ffffff" : "#f4f3f4"}
                 />
               }
             />
@@ -392,8 +447,10 @@ export const ProfileScreen = () => {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionHeader}>O APLIKACJI</Text>
-          <View style={styles.card}>
+          <Text style={[styles.sectionHeader, { color: theme.textMuted }]}>
+            O APLIKACJI
+          </Text>
+          <View style={[styles.card, { backgroundColor: theme.surface }]}>
             <SettingsRow
               icon="information-circle-outline"
               title="Wersja aplikacji"
@@ -413,7 +470,7 @@ export const ProfileScreen = () => {
         </View>
 
         <View style={[styles.section, { marginBottom: 40 }]}>
-          <View style={styles.card}>
+          <View style={[styles.card, { backgroundColor: theme.surface }]}>
             <SettingsRow
               icon="log-out-outline"
               title="Wyloguj się"
@@ -429,56 +486,104 @@ export const ProfileScreen = () => {
         animationType="slide"
         transparent={false}
       >
-        <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>Edytuj Profil</Text>
+        <View
+          style={[
+            styles.modalHeader,
+            { backgroundColor: theme.surface, borderBottomColor: theme.border },
+          ]}
+        >
+          <Text style={[styles.modalTitle, { color: theme.text }]}>
+            Edytuj Profil
+          </Text>
           <TouchableOpacity onPress={() => setIsEditModalVisible(false)}>
-            <Ionicons name="close" size={28} color="#333" />
+            <Ionicons name="close" size={28} color={theme.text} />
           </TouchableOpacity>
         </View>
-        <ScrollView style={styles.modalContent}>
-          <View style={styles.editCard}>
+        <ScrollView
+          style={[styles.modalContent, { backgroundColor: theme.background }]}
+        >
+          <View style={[styles.editCard, { backgroundColor: theme.surface }]}>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Imię / Nazwa użytkownika</Text>
+              <Text style={[styles.label, { color: theme.text }]}>
+                Imię / Nazwa użytkownika
+              </Text>
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: theme.background,
+                    borderColor: theme.border,
+                    color: theme.text,
+                  },
+                ]}
                 value={displayName}
                 onChangeText={setDisplayName}
                 placeholder="Wpisz jak mamy się do Ciebie zwracać"
+                placeholderTextColor={theme.textMuted}
               />
             </View>
 
             <View style={styles.row}>
               <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
-                <Text style={styles.label}>Waga (kg)</Text>
+                <Text style={[styles.label, { color: theme.text }]}>
+                  Waga (kg)
+                </Text>
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: theme.background,
+                      borderColor: theme.border,
+                      color: theme.text,
+                    },
+                  ]}
                   value={weight}
                   onChangeText={setWeight}
                   keyboardType="numeric"
                   placeholder="np. 78.5"
+                  placeholderTextColor={theme.textMuted}
                 />
               </View>
-
               <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.label}>Wzrost (cm)</Text>
+                <Text style={[styles.label, { color: theme.text }]}>
+                  Wzrost (cm)
+                </Text>
                 <TextInput
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: theme.background,
+                      borderColor: theme.border,
+                      color: theme.text,
+                    },
+                  ]}
                   value={height}
                   onChangeText={setHeight}
                   keyboardType="numeric"
                   placeholder="np. 178"
+                  placeholderTextColor={theme.textMuted}
                 />
               </View>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Data urodzenia</Text>
+              <Text style={[styles.label, { color: theme.text }]}>
+                Data urodzenia
+              </Text>
               <TouchableOpacity onPress={() => setShowDatePicker(true)}>
                 <View pointerEvents="none">
                   <TextInput
-                    style={styles.input}
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: theme.background,
+                        borderColor: theme.border,
+                        color: theme.text,
+                      },
+                    ]}
                     value={birthDate}
                     placeholder="Wybierz datę z kalendarza"
+                    placeholderTextColor={theme.textMuted}
                     editable={false}
                   />
                 </View>
@@ -486,99 +591,110 @@ export const ProfileScreen = () => {
             </View>
 
             {showDatePicker && (
-              <View style={styles.pickerContainer}>
+              <View
+                style={[
+                  styles.pickerContainer,
+                  { backgroundColor: theme.background },
+                ]}
+              >
                 <DateTimePicker
                   value={dateObj}
                   mode="date"
                   display="spinner"
                   maximumDate={new Date()}
                   onChange={handleDateChange}
+                  textColor={theme.text}
                 />
                 {Platform.OS === "ios" && (
                   <TouchableOpacity
-                    style={styles.pickerDoneBtn}
+                    style={[
+                      styles.pickerDoneBtn,
+                      { backgroundColor: theme.badgeBg },
+                    ]}
                     onPress={() => setShowDatePicker(false)}
                   >
-                    <Text style={styles.pickerDoneText}>Gotowe</Text>
+                    <Text
+                      style={[styles.pickerDoneText, { color: theme.primary }]}
+                    >
+                      Gotowe
+                    </Text>
                   </TouchableOpacity>
                 )}
               </View>
             )}
 
             <TouchableOpacity
-              style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+              style={[
+                styles.saveButton,
+                { backgroundColor: theme.primary },
+                saving && styles.saveButtonDisabled,
+              ]}
               onPress={handleSave}
               disabled={saving}
             >
               {saving ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color={theme.primaryText} />
               ) : (
-                <Text style={styles.saveButtonText}>Zapisz zmiany</Text>
+                <Text
+                  style={[styles.saveButtonText, { color: theme.primaryText }]}
+                >
+                  Zapisz zmiany
+                </Text>
               )}
             </TouchableOpacity>
           </View>
         </ScrollView>
       </Modal>
+
       <Modal
         visible={isEmailModalVisible}
         animationType="fade"
         transparent={true}
       >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0,0,0,0.5)",
-            justifyContent: "center",
-            padding: 20,
-          }}
-        >
-          <View
-            style={{ backgroundColor: "#fff", padding: 20, borderRadius: 12 }}
-          >
-            <Text
-              style={{ fontSize: 18, fontWeight: "bold", marginBottom: 15 }}
-            >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalPopup, { backgroundColor: theme.surface }]}>
+            <Text style={[styles.popupTitle, { color: theme.text }]}>
               Zmień adres e-mail
             </Text>
-            <Text style={{ color: "#666", marginBottom: 10 }}>
+            <Text style={[styles.popupDesc, { color: theme.textMuted }]}>
               Wpisz nowy adres e-mail. Na oba adresy (stary i nowy) zostaną
               wysłane linki potwierdzające.
             </Text>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: theme.background,
+                  borderColor: theme.border,
+                  color: theme.text,
+                },
+              ]}
               placeholder="Nowy adres e-mail"
+              placeholderTextColor={theme.textMuted}
               value={newEmail}
               onChangeText={setNewEmail}
               autoCapitalize="none"
               keyboardType="email-address"
             />
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "flex-end",
-                marginTop: 20,
-              }}
-            >
+            <View style={styles.popupActions}>
               <TouchableOpacity
                 onPress={() => setIsEmailModalVisible(false)}
-                style={{ padding: 10, marginRight: 10 }}
+                style={styles.cancelBtn}
               >
-                <Text style={{ color: "#666", fontWeight: "bold" }}>
+                <Text style={{ color: theme.textMuted, fontWeight: "bold" }}>
                   Anuluj
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleEmailChangeSubmit}
-                style={{
-                  backgroundColor: "#17a2b8",
-                  padding: 10,
-                  borderRadius: 8,
-                }}
+                style={[styles.confirmBtn, { backgroundColor: theme.primary }]}
               >
                 {isEmailLoading ? (
-                  <ActivityIndicator color="#fff" />
+                  <ActivityIndicator color={theme.primaryText} />
                 ) : (
-                  <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                  <Text
+                    style={{ color: theme.primaryText, fontWeight: "bold" }}
+                  >
                     Zmień e-mail
                   </Text>
                 )}
@@ -587,86 +703,88 @@ export const ProfileScreen = () => {
           </View>
         </View>
       </Modal>
+
       <Modal
         visible={isPasswordModalVisible}
         animationType="fade"
         transparent={true}
       >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0,0,0,0.5)",
-            justifyContent: "center",
-            padding: 20,
-          }}
-        >
-          <View
-            style={{ backgroundColor: "#fff", padding: 20, borderRadius: 12 }}
-          >
-            <Text
-              style={{ fontSize: 18, fontWeight: "bold", marginBottom: 15 }}
-            >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalPopup, { backgroundColor: theme.surface }]}>
+            <Text style={[styles.popupTitle, { color: theme.text }]}>
               Zmień hasło
             </Text>
-            <Text style={{ color: "#666", marginBottom: 15 }}>
+            <Text style={[styles.popupDesc, { color: theme.textMuted }]}>
               Wpisz i potwierdź swoje nowe hasło poniżej.
             </Text>
-
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Nowe hasło:</Text>
+              <Text style={[styles.label, { color: theme.text }]}>
+                Nowe hasło:
+              </Text>
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: theme.background,
+                    borderColor: theme.border,
+                    color: theme.text,
+                  },
+                ]}
                 value={newPasswordInput}
                 onChangeText={setNewPasswordInput}
                 secureTextEntry
                 autoCapitalize="none"
               />
             </View>
-
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Powtórz nowe hasło:</Text>
+              <Text style={[styles.label, { color: theme.text }]}>
+                Powtórz nowe hasło:
+              </Text>
               <TextInput
-                style={styles.input}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: theme.background,
+                    borderColor: theme.border,
+                    color: theme.text,
+                  },
+                ]}
                 value={confirmPasswordInput}
                 onChangeText={setConfirmPasswordInput}
                 secureTextEntry
                 autoCapitalize="none"
               />
             </View>
-
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "flex-end",
-                marginTop: 20,
-              }}
-            >
+            <View style={styles.popupActions}>
               <TouchableOpacity
                 onPress={() => {
                   setIsPasswordModalVisible(false);
                   setNewPasswordInput("");
                   setConfirmPasswordInput("");
                 }}
-                style={{ padding: 10, marginRight: 10 }}
+                style={styles.cancelBtn}
               >
-                <Text style={{ color: "#666", fontWeight: "bold" }}>
+                <Text style={{ color: theme.textMuted, fontWeight: "bold" }}>
                   Anuluj
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handlePasswordChangeSubmit}
-                style={{
-                  backgroundColor: "#17a2b8",
-                  padding: 10,
-                  borderRadius: 8,
-                  minWidth: 80,
-                  alignItems: "center",
-                }}
+                style={[
+                  styles.confirmBtn,
+                  {
+                    backgroundColor: theme.primary,
+                    minWidth: 80,
+                    alignItems: "center",
+                  },
+                ]}
               >
                 {isPasswordLoading ? (
-                  <ActivityIndicator color="#fff" />
+                  <ActivityIndicator color={theme.primaryText} />
                 ) : (
-                  <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                  <Text
+                    style={{ color: theme.primaryText, fontWeight: "bold" }}
+                  >
                     Zapisz
                   </Text>
                 )}
@@ -675,76 +793,48 @@ export const ProfileScreen = () => {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  centerContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f8f9fa",
-  },
-  container: { flex: 1, backgroundColor: "#f8f9fa" },
-  header: {
-    padding: 20,
-    paddingTop: 60,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  headerTitle: { fontSize: 24, fontWeight: "bold", color: "#333" },
+  centerContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  container: { flex: 1 },
+  header: { padding: 20, paddingTop: 10, borderBottomWidth: 1 },
+  headerTitle: { fontSize: 24, fontWeight: "bold" },
   profileHeader: {
     alignItems: "center",
     paddingVertical: 40,
-    backgroundColor: "#fff",
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
   },
   avatarContainer: { position: "relative", marginBottom: 15 },
-  avatar: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    borderWidth: 3,
-    borderColor: "#17a2b8",
-  },
-  avatarPlaceholder: {
-    backgroundColor: "#e9ecef",
-    justifyContent: "center",
-    alignItems: "center",
-  },
+  avatar: { width: 90, height: 90, borderRadius: 45, borderWidth: 3 },
+  avatarPlaceholder: { justifyContent: "center", alignItems: "center" },
   cameraBadge: {
     position: "absolute",
     bottom: 0,
     right: 0,
-    backgroundColor: "#17a2b8",
     width: 28,
     height: 28,
     borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "#fff",
   },
-  userName: { fontSize: 22, fontWeight: "bold", color: "#333" },
-  userEmail: { fontSize: 14, color: "#666", marginTop: 5 },
+  userName: { fontSize: 22, fontWeight: "bold" },
+  userEmail: { fontSize: 14, marginTop: 5 },
   section: { marginTop: 25, paddingHorizontal: 15 },
   sectionHeader: {
     fontSize: 12,
     fontWeight: "bold",
-    color: "#888",
     marginBottom: 10,
     marginLeft: 5,
     letterSpacing: 1,
   },
   card: {
-    backgroundColor: "#fff",
     borderRadius: 10,
     overflow: "hidden",
     elevation: 1,
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -756,68 +846,62 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: 15,
     borderBottomWidth: 1,
-    borderBottomColor: "#f1f3f5",
   },
   settingsRowLeft: { flexDirection: "row", alignItems: "center" },
   settingsIcon: { marginRight: 15 },
-  settingsTitle: { fontSize: 16, color: "#333" },
-  destructiveText: { color: "#e11d48", fontWeight: "bold" },
+  settingsTitle: { fontSize: 16 },
   settingsRowRight: { flexDirection: "row", alignItems: "center" },
-  settingsValue: { fontSize: 15, color: "#888", marginRight: 10 },
+  settingsValue: { fontSize: 15, marginRight: 10 },
+
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     padding: 20,
-    paddingTop: 60,
-    backgroundColor: "#fff",
+    paddingTop: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
   },
-  modalTitle: { fontSize: 20, fontWeight: "bold", color: "#333" },
-  modalContent: { flex: 1, backgroundColor: "#f8f9fa" },
+  modalTitle: { fontSize: 20, fontWeight: "bold" },
+  modalContent: { flex: 1 },
   editCard: {
-    backgroundColor: "#fff",
     margin: 15,
     padding: 20,
     borderRadius: 12,
     elevation: 2,
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
   },
   inputGroup: { marginBottom: 15 },
   row: { flexDirection: "row" },
-  label: { fontSize: 14, fontWeight: "bold", color: "#555", marginBottom: 5 },
-  input: {
-    backgroundColor: "#f8f9fa",
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#dee2e6",
-    fontSize: 16,
-    color: "#333",
-  },
+  label: { fontSize: 14, fontWeight: "bold", marginBottom: 5 },
+  input: { padding: 12, borderRadius: 8, borderWidth: 1, fontSize: 16 },
   saveButton: {
-    backgroundColor: "#17a2b8",
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: "center",
     marginTop: 10,
   },
   saveButtonDisabled: { opacity: 0.7 },
-  saveButtonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-  pickerContainer: {
-    backgroundColor: "#f8f9fa",
-    borderRadius: 8,
-    marginBottom: 15,
-    overflow: "hidden",
+  saveButtonText: { fontWeight: "bold", fontSize: 16 },
+  pickerContainer: { borderRadius: 8, marginBottom: 15, overflow: "hidden" },
+  pickerDoneBtn: { padding: 12, alignItems: "center" },
+  pickerDoneText: { fontWeight: "bold", fontSize: 16 },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    padding: 20,
   },
-  pickerDoneBtn: {
-    padding: 12,
-    backgroundColor: "#e0f2fe",
-    alignItems: "center",
+  modalPopup: { padding: 20, borderRadius: 12 },
+  popupTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 15 },
+  popupDesc: { marginBottom: 15, lineHeight: 20 },
+  popupActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginTop: 20,
   },
-  pickerDoneText: { color: "#0284c7", fontWeight: "bold", fontSize: 16 },
+  cancelBtn: { padding: 10, marginRight: 10 },
+  confirmBtn: { padding: 10, borderRadius: 8 },
 });

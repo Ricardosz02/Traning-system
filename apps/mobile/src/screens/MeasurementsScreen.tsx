@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  SafeAreaView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../contexts/AuthContext";
@@ -21,9 +22,15 @@ import {
   deleteMeasurement,
 } from "../services/measurementService";
 import { BodyMeasurement } from "../types/database.types";
+import { useThemeStore } from "../store/themeStore";
+import { colors } from "../theme/colors";
 
 export const MeasurementsScreen = () => {
   const { user } = useAuth();
+
+  const { isDarkMode } = useThemeStore();
+  const theme = isDarkMode ? colors.dark : colors.light;
+
   const [measurements, setMeasurements] = useState<BodyMeasurement[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalVisible, setModalVisible] = useState(false);
@@ -107,169 +114,244 @@ export const MeasurementsScreen = () => {
   };
 
   const renderItem = ({ item }: { item: BodyMeasurement }) => (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.dateText}>
-          <Ionicons name="calendar-outline" size={16} />{" "}
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: theme.surface,
+          shadowColor: isDarkMode ? "#000" : "#000",
+        },
+      ]}
+    >
+      <View style={[styles.cardHeader, { borderBottomColor: theme.border }]}>
+        <Text style={[styles.dateText, { color: theme.text }]}>
+          <Ionicons name="calendar-outline" size={16} color={theme.text} />{" "}
           {new Date(item.date).toLocaleDateString("pl-PL")}
         </Text>
         <TouchableOpacity onPress={() => handleDelete(item.id)}>
-          <Ionicons name="trash-outline" size={20} color="#dc3545" />
+          <Ionicons name="trash-outline" size={20} color={theme.danger} />
         </TouchableOpacity>
       </View>
 
       <View style={styles.grid}>
         <View style={styles.gridItem}>
-          <Text style={styles.label}>Biceps</Text>
-          <Text style={styles.value}>{item.biceps || "--"} cm</Text>
+          <Text style={[styles.label, { color: theme.textMuted }]}>Biceps</Text>
+          <Text style={[styles.value, { color: theme.primary }]}>
+            {item.biceps || "--"} cm
+          </Text>
         </View>
         <View style={styles.gridItem}>
-          <Text style={styles.label}>Klatka</Text>
-          <Text style={styles.value}>{item.chest || "--"} cm</Text>
+          <Text style={[styles.label, { color: theme.textMuted }]}>Klatka</Text>
+          <Text style={[styles.value, { color: theme.primary }]}>
+            {item.chest || "--"} cm
+          </Text>
         </View>
         <View style={styles.gridItem}>
-          <Text style={styles.label}>Talia</Text>
-          <Text style={styles.value}>{item.waist || "--"} cm</Text>
+          <Text style={[styles.label, { color: theme.textMuted }]}>Talia</Text>
+          <Text style={[styles.value, { color: theme.primary }]}>
+            {item.waist || "--"} cm
+          </Text>
         </View>
         <View style={styles.gridItem}>
-          <Text style={styles.label}>Uda</Text>
-          <Text style={styles.value}>{item.thighs || "--"} cm</Text>
+          <Text style={[styles.label, { color: theme.textMuted }]}>Uda</Text>
+          <Text style={[styles.value, { color: theme.primary }]}>
+            {item.thighs || "--"} cm
+          </Text>
         </View>
         <View style={styles.gridItem}>
-          <Text style={styles.label}>Łydki</Text>
-          <Text style={styles.value}>{item.calves || "--"} cm</Text>
+          <Text style={[styles.label, { color: theme.textMuted }]}>Łydki</Text>
+          <Text style={[styles.value, { color: theme.primary }]}>
+            {item.calves || "--"} cm
+          </Text>
         </View>
       </View>
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      {loading ? (
-        <ActivityIndicator
-          size="large"
-          color="#17a2b8"
-          style={{ marginTop: 50 }}
-        />
-      ) : measurements.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Ionicons name="body-outline" size={60} color="#ccc" />
-          <Text style={styles.emptyText}>
-            Brak pomiarów. Dodaj swój pierwszy wpis!
-          </Text>
-        </View>
-      ) : (
-        <FlatList
-          data={measurements}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          // @ts-ignore
-          contentContainerStyle={styles.listContent}
-        />
-      )}
-
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => setModalVisible(true)}
-      >
-        <Ionicons name="add" size={30} color="#fff" />
-      </TouchableOpacity>
-
-      <Modal visible={isModalVisible} animationType="slide" transparent>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.modalOverlay}
-        >
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Nowy pomiar</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Ionicons name="close" size={28} color="#333" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView>
-              <View style={styles.inputRow}>
-                <Text style={styles.inputLabel}>Biceps (cm)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={biceps}
-                  onChangeText={setBiceps}
-                  keyboardType="numeric"
-                  placeholder="np. 38.5"
-                />
-              </View>
-              <View style={styles.inputRow}>
-                <Text style={styles.inputLabel}>Klatka (cm)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={chest}
-                  onChangeText={setChest}
-                  keyboardType="numeric"
-                  placeholder="np. 105"
-                />
-              </View>
-              <View style={styles.inputRow}>
-                <Text style={styles.inputLabel}>Talia / Brzuch (cm)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={waist}
-                  onChangeText={setWaist}
-                  keyboardType="numeric"
-                  placeholder="np. 82"
-                />
-              </View>
-              <View style={styles.inputRow}>
-                <Text style={styles.inputLabel}>Uda (cm)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={thighs}
-                  onChangeText={setThighs}
-                  keyboardType="numeric"
-                  placeholder="np. 60"
-                />
-              </View>
-              <View style={styles.inputRow}>
-                <Text style={styles.inputLabel}>Łydki (cm)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={calves}
-                  onChangeText={setCalves}
-                  keyboardType="numeric"
-                  placeholder="np. 40"
-                />
-              </View>
-
-              <TouchableOpacity
-                style={styles.saveBtn}
-                onPress={handleSave}
-                disabled={saving}
-              >
-                {saving ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.saveBtnText}>Zapisz pomiary</Text>
-                )}
-              </TouchableOpacity>
-            </ScrollView>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        {loading ? (
+          <ActivityIndicator
+            size="large"
+            color={theme.primary}
+            style={{ marginTop: 50 }}
+          />
+        ) : measurements.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Ionicons name="body-outline" size={60} color={theme.textMuted} />
+            <Text style={[styles.emptyText, { color: theme.textMuted }]}>
+              Brak pomiarów. Dodaj swój pierwszy wpis!
+            </Text>
           </View>
-        </KeyboardAvoidingView>
-      </Modal>
-    </View>
+        ) : (
+          <FlatList
+            data={measurements}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+            contentContainerStyle={styles.listContent}
+          />
+        )}
+
+        <TouchableOpacity
+          style={[styles.fab, { backgroundColor: theme.primary }]}
+          onPress={() => setModalVisible(true)}
+        >
+          <Ionicons name="add" size={30} color={theme.primaryText} />
+        </TouchableOpacity>
+
+        <Modal visible={isModalVisible} animationType="slide" transparent>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={styles.modalOverlay}
+          >
+            <View
+              style={[styles.modalContent, { backgroundColor: theme.surface }]}
+            >
+              <View style={styles.modalHeader}>
+                <Text style={[styles.modalTitle, { color: theme.text }]}>
+                  Nowy pomiar
+                </Text>
+                <TouchableOpacity onPress={() => setModalVisible(false)}>
+                  <Ionicons name="close" size={28} color={theme.text} />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView>
+                <View style={styles.inputRow}>
+                  <Text style={[styles.inputLabel, { color: theme.text }]}>
+                    Biceps (cm)
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: theme.background,
+                        borderColor: theme.border,
+                        color: theme.text,
+                      },
+                    ]}
+                    value={biceps}
+                    onChangeText={setBiceps}
+                    keyboardType="numeric"
+                    placeholder="np. 38.5"
+                    placeholderTextColor={theme.textMuted}
+                  />
+                </View>
+                <View style={styles.inputRow}>
+                  <Text style={[styles.inputLabel, { color: theme.text }]}>
+                    Klatka (cm)
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: theme.background,
+                        borderColor: theme.border,
+                        color: theme.text,
+                      },
+                    ]}
+                    value={chest}
+                    onChangeText={setChest}
+                    keyboardType="numeric"
+                    placeholder="np. 105"
+                    placeholderTextColor={theme.textMuted}
+                  />
+                </View>
+                <View style={styles.inputRow}>
+                  <Text style={[styles.inputLabel, { color: theme.text }]}>
+                    Talia / Brzuch (cm)
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: theme.background,
+                        borderColor: theme.border,
+                        color: theme.text,
+                      },
+                    ]}
+                    value={waist}
+                    onChangeText={setWaist}
+                    keyboardType="numeric"
+                    placeholder="np. 82"
+                    placeholderTextColor={theme.textMuted}
+                  />
+                </View>
+                <View style={styles.inputRow}>
+                  <Text style={[styles.inputLabel, { color: theme.text }]}>
+                    Uda (cm)
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: theme.background,
+                        borderColor: theme.border,
+                        color: theme.text,
+                      },
+                    ]}
+                    value={thighs}
+                    onChangeText={setThighs}
+                    keyboardType="numeric"
+                    placeholder="np. 60"
+                    placeholderTextColor={theme.textMuted}
+                  />
+                </View>
+                <View style={styles.inputRow}>
+                  <Text style={[styles.inputLabel, { color: theme.text }]}>
+                    Łydki (cm)
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: theme.background,
+                        borderColor: theme.border,
+                        color: theme.text,
+                      },
+                    ]}
+                    value={calves}
+                    onChangeText={setCalves}
+                    keyboardType="numeric"
+                    placeholder="np. 40"
+                    placeholderTextColor={theme.textMuted}
+                  />
+                </View>
+
+                <TouchableOpacity
+                  style={[styles.saveBtn, { backgroundColor: theme.primary }]}
+                  onPress={handleSave}
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <ActivityIndicator color={theme.primaryText} />
+                  ) : (
+                    <Text
+                      style={[styles.saveBtnText, { color: theme.primaryText }]}
+                    >
+                      Zapisz pomiary
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </ScrollView>
+            </View>
+          </KeyboardAvoidingView>
+        </Modal>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fa" },
+  container: { flex: 1 },
   emptyState: { flex: 1, justifyContent: "center", alignItems: "center" },
-  emptyText: { color: "#666", fontSize: 16, marginTop: 10 },
+  emptyText: { fontSize: 16, marginTop: 10 },
   card: {
-    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 15,
     marginBottom: 15,
     elevation: 2,
-    shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
@@ -278,24 +360,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
     paddingBottom: 10,
     marginBottom: 10,
   },
-  dateText: { fontSize: 16, fontWeight: "bold", color: "#333" },
+  dateText: { fontSize: 16, fontWeight: "bold" },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
   },
   gridItem: { width: "30%", marginBottom: 10 },
-  label: { fontSize: 12, color: "#666" },
-  value: { fontSize: 16, fontWeight: "bold", color: "#17a2b8" },
+  label: { fontSize: 12 },
+  value: { fontSize: 16, fontWeight: "bold" },
   fab: {
     position: "absolute",
     bottom: 20,
     right: 20,
-    backgroundColor: "#17a2b8",
     width: 60,
     height: 60,
     borderRadius: 30,
@@ -312,7 +392,6 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: "#fff",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
@@ -331,11 +410,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 15,
   },
-  inputLabel: { fontSize: 16, color: "#333", flex: 1 },
+  inputLabel: { fontSize: 16, flex: 1 },
   input: {
-    backgroundColor: "#f8f9fa",
     borderWidth: 1,
-    borderColor: "#dee2e6",
     borderRadius: 8,
     padding: 10,
     flex: 1,
@@ -343,14 +420,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   saveBtn: {
-    backgroundColor: "#17a2b8",
     padding: 15,
     borderRadius: 8,
     alignItems: "center",
     marginTop: 10,
     marginBottom: 20,
   },
-  saveBtnText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
+  saveBtnText: { fontSize: 16, fontWeight: "bold" },
   listContent: {
     padding: 15,
     paddingBottom: 80,

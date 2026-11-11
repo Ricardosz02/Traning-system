@@ -65,6 +65,7 @@ const NavigationWrapper = () => {
             options={({ route }) => ({
               title: route.params.planName,
               headerBackTitle: "Wstecz",
+              headerShown: false,
             })}
           />
 
@@ -87,7 +88,7 @@ const NavigationWrapper = () => {
           <AuthStack.Screen
             name="Register"
             component={RegisterScreen}
-            options={{ title: "Załóż konto" }}
+            options={{ title: "Załóż konto", headerShown: false }}
           />
         </AuthStack.Navigator>
       )}

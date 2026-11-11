@@ -2,13 +2,13 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
-import { useColorScheme } from "react-native";
 
 import { TrainingScreen } from "../screens/TrainingScreen";
 import { ProfileScreen } from "../screens/ProfileScreen";
 import { PlansScreen } from "../screens/PlansScreen";
 import { MeasurementsScreen } from "../screens/MeasurementsScreen";
 import { colors } from "../theme/colors";
+import { useThemeStore } from "../store/themeStore";
 
 export type TabParamList = {
   Plany: undefined;
@@ -20,8 +20,23 @@ const Tab = createBottomTabNavigator<TabParamList>();
 const ProfileStack = createNativeStackNavigator();
 
 const ProfileStackNavigator = () => {
+  const { isDarkMode } = useThemeStore();
+  const theme = isDarkMode ? colors.dark : colors.light;
+
   return (
-    <ProfileStack.Navigator>
+    <ProfileStack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: theme.surface,
+        },
+        headerTintColor: theme.primary,
+        headerTitleStyle: {
+          color: theme.text,
+        },
+        headerShadowVisible: false,
+        headerBackTitle: "",
+      }}
+    >
       <ProfileStack.Screen
         name="ProfilGlowny"
         component={ProfileScreen}
@@ -37,16 +52,15 @@ const ProfileStackNavigator = () => {
 };
 
 export const TabNavigator = () => {
-  const systemColorScheme = useColorScheme();
-  const isDark = systemColorScheme === "dark";
-  const theme = isDark ? colors.dark : colors.light;
+  const { isDarkMode } = useThemeStore();
+  const theme = isDarkMode ? colors.dark : colors.light;
 
   return (
     <Tab.Navigator
       initialRouteName="Trening"
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName: keyof typeof Ionicons.glyphMap;
+          let iconName: keyof typeof Ionicons.glyphMap = "help-outline";
 
           if (route.name === "Plany") {
             iconName = focused ? "calendar" : "calendar-outline";
@@ -54,8 +68,6 @@ export const TabNavigator = () => {
             iconName = focused ? "barbell" : "barbell-outline";
           } else if (route.name === "Profil") {
             iconName = focused ? "person" : "person-outline";
-          } else {
-            iconName = "help-outline";
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;

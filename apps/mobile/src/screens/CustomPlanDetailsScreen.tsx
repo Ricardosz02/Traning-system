@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   Alert,
   Modal,
+  useColorScheme,
+  SafeAreaView,
 } from "react-native";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 import { fetchCustomWorkoutItems } from "../services/planService";
@@ -15,6 +17,8 @@ import { AppStackParamList } from "../types/navigation.types";
 import { useWorkoutStore } from "../store/workoutStore";
 import { Ionicons } from "@expo/vector-icons";
 import YoutubePlayer from "react-native-youtube-iframe";
+import { colors } from "../theme/colors";
+import { useThemeStore } from "../store/themeStore";
 
 type CustomPlanDetailsRouteProp = RouteProp<
   AppStackParamList,
@@ -42,7 +46,11 @@ const getYoutubeVideoId = (url?: string) => {
 export const CustomPlanDetailsScreen = () => {
   const route = useRoute<CustomPlanDetailsRouteProp>();
   const navigation = useNavigation();
-  const { planId } = route.params;
+  const { planId, planName } = route.params;
+
+  const systemColorScheme = useColorScheme();
+  const { isDarkMode: isDark } = useThemeStore();
+  const theme = isDark ? colors.dark : colors.light;
 
   const [loading, setLoading] = useState(true);
   const [exercisesByDay, setExercisesByDay] = useState<Record<number, any[]>>(
@@ -118,8 +126,10 @@ export const CustomPlanDetailsScreen = () => {
 
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#17a2b8" />
+      <View
+        style={[styles.centerContainer, { backgroundColor: theme.background }]}
+      >
+        <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
   }
@@ -129,16 +139,55 @@ export const CustomPlanDetailsScreen = () => {
     .sort((a, b) => a - b);
 
   return (
-    <View style={{ flex: 1 }}>
-      <ScrollView style={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.surface }}>
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: theme.surface, borderBottomColor: theme.border },
+        ]}
+      >
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+        >
+          <Ionicons name="chevron-back" size={28} color={theme.primary} />
+        </TouchableOpacity>
+        <Text
+          style={[styles.headerTitle, { color: theme.text }]}
+          numberOfLines={1}
+        >
+          {planName || "Twój Plan"}
+        </Text>
+        <View style={{ width: 28 }} />
+      </View>
+
+      <ScrollView
+        style={[styles.container, { backgroundColor: theme.background }]}
+      >
         {activeDays.length === 0 ? (
-          <Text style={styles.emptyText}>
+          <Text style={[styles.emptyText, { color: theme.textMuted }]}>
             Ten plan nie ma przypisanych żadnych ćwiczeń.
           </Text>
         ) : (
           activeDays.map((day) => (
-            <View key={day} style={styles.dayContainer}>
-              <Text style={styles.dayTitle}>{DAY_NAMES[day]}</Text>
+            <View
+              key={day}
+              style={[
+                styles.dayContainer,
+                {
+                  backgroundColor: theme.surface,
+                  shadowColor: isDark ? "#000" : "#000",
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.dayTitle,
+                  { color: theme.text, borderBottomColor: theme.border },
+                ]}
+              >
+                {DAY_NAMES[day]}
+              </Text>
 
               {exercisesByDay[day].map((item, index) => {
                 const hasVideo = !!getYoutubeVideoId(item.video_url);
@@ -148,14 +197,30 @@ export const CustomPlanDetailsScreen = () => {
                     style={styles.exerciseRow}
                     onPress={() => handleExerciseClick(item)}
                   >
-                    <View style={styles.orderCircle}>
-                      <Text style={styles.orderText}>{index + 1}</Text>
+                    <View
+                      style={[
+                        styles.orderCircle,
+                        { backgroundColor: theme.badgeBg },
+                      ]}
+                    >
+                      <Text
+                        style={[styles.orderText, { color: theme.badgeText }]}
+                      >
+                        {index + 1}
+                      </Text>
                     </View>
                     <View style={styles.exerciseInfo}>
-                      <Text style={styles.exerciseName}>
+                      <Text
+                        style={[styles.exerciseName, { color: theme.text }]}
+                      >
                         {item.exercise_name || "Nieznane ćwiczenie"}
                       </Text>
-                      <Text style={styles.exerciseDetails}>
+                      <Text
+                        style={[
+                          styles.exerciseDetails,
+                          { color: theme.textMuted },
+                        ]}
+                      >
                         Serie: {item.sets || "Brak"} | Powtórzenia:{" "}
                         {item.reps || "Brak"}
                       </Text>
@@ -164,7 +229,7 @@ export const CustomPlanDetailsScreen = () => {
                       <Ionicons
                         name="play-circle"
                         size={28}
-                        color="#e11d48"
+                        color={theme.primary}
                         style={{ marginLeft: 10 }}
                       />
                     )}
@@ -173,10 +238,20 @@ export const CustomPlanDetailsScreen = () => {
               })}
 
               <TouchableOpacity
-                style={styles.startButton}
+                style={[styles.startButton, { backgroundColor: theme.primary }]}
                 onPress={() => handleStartWorkout(day)}
               >
-                <Text style={styles.startButtonText}>Rozpocznij trening</Text>
+                <Ionicons
+                  name="play"
+                  size={18}
+                  color={theme.primaryText}
+                  style={{ marginRight: 8 }}
+                />
+                <Text
+                  style={[styles.startButtonText, { color: theme.primaryText }]}
+                >
+                  Rozpocznij trening
+                </Text>
               </TouchableOpacity>
             </View>
           ))
@@ -185,11 +260,20 @@ export const CustomPlanDetailsScreen = () => {
 
       <Modal visible={activeVideoId !== null} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{activeVideoTitle}</Text>
+          <View
+            style={[styles.modalContent, { backgroundColor: theme.surface }]}
+          >
+            <View
+              style={[styles.modalHeader, { borderBottomColor: theme.border }]}
+            >
+              <Text
+                style={[styles.modalTitle, { color: theme.text }]}
+                numberOfLines={1}
+              >
+                {activeVideoTitle}
+              </Text>
               <TouchableOpacity onPress={() => setActiveVideoId(null)}>
-                <Ionicons name="close" size={28} color="#333" />
+                <Ionicons name="close" size={28} color={theme.text} />
               </TouchableOpacity>
             </View>
 
@@ -205,7 +289,7 @@ export const CustomPlanDetailsScreen = () => {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -214,62 +298,72 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f8f9fa",
   },
-  container: { flex: 1, backgroundColor: "#f8f9fa", padding: 15 },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  backButton: { padding: 4 },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    flex: 1,
+    textAlign: "center",
+    marginHorizontal: 10,
+  },
+  container: { flex: 1, padding: 15 },
   emptyText: {
     textAlign: "center",
-    color: "#666",
     marginTop: 40,
     fontSize: 16,
   },
   dayContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 15,
+    borderRadius: 16,
+    padding: 16,
     marginBottom: 20,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
   dayTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
-    marginBottom: 15,
+    marginBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    paddingBottom: 5,
+    paddingBottom: 8,
   },
   exerciseRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 12,
-    paddingVertical: 5,
+    marginBottom: 16,
+    paddingVertical: 4,
   },
   orderCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#e0f2fe",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 15,
+    marginRight: 12,
   },
-  orderText: { color: "#0284c7", fontWeight: "bold", fontSize: 14 },
-  exerciseInfo: { flex: 1 },
-  exerciseName: { fontSize: 16, fontWeight: "bold", color: "#333" },
-  exerciseDetails: { fontSize: 13, color: "#666", marginTop: 2 },
+  orderText: { fontWeight: "bold", fontSize: 14 },
+  exerciseInfo: { flex: 1, justifyContent: "center" },
+  exerciseName: { fontSize: 16, fontWeight: "700", marginBottom: 4 },
+  exerciseDetails: { fontSize: 13, fontWeight: "500" },
   startButton: {
-    backgroundColor: "#17a2b8",
-    paddingVertical: 12,
-    borderRadius: 8,
+    flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
+    paddingVertical: 14,
+    borderRadius: 12,
     marginTop: 15,
   },
-  startButtonText: { color: "#fff", fontWeight: "bold", fontSize: 15 },
+  startButtonText: { fontWeight: "bold", fontSize: 16 },
 
   modalOverlay: {
     flex: 1,
@@ -278,19 +372,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContent: {
-    backgroundColor: "#fff",
     width: "90%",
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: "hidden",
   },
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 15,
+    padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
   },
-  modalTitle: { fontSize: 18, fontWeight: "bold", color: "#333", flex: 1 },
+  modalTitle: { fontSize: 18, fontWeight: "bold", flex: 1, marginRight: 10 },
   videoWrapper: { width: "100%", backgroundColor: "#000" },
 });

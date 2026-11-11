@@ -8,6 +8,7 @@ import {
   Alert,
   ActivityIndicator,
   Modal,
+  SafeAreaView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useWorkoutStore } from "../store/workoutStore";
@@ -28,6 +29,8 @@ import { Ionicons } from "@expo/vector-icons";
 import YoutubePlayer from "react-native-youtube-iframe";
 import { useSettingsStore } from "../store/settingsStore";
 import { RestTimerBar } from "../components/RestTimerBar";
+import { useThemeStore } from "../store/themeStore";
+import { colors } from "../theme/colors";
 
 const DAY_NAMES: Record<number, string> = {
   1: "Poniedziałek",
@@ -58,6 +61,9 @@ interface DashboardPlan {
 export const TrainingScreen = () => {
   const navigation = useNavigation();
   const { user } = useAuth();
+
+  const { isDarkMode } = useThemeStore();
+  const theme = isDarkMode ? colors.dark : colors.light;
 
   const {
     isActive,
@@ -294,132 +300,230 @@ export const TrainingScreen = () => {
   if (!isActive) {
     if (isLoadingDashboard) {
       return (
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#17a2b8" />
+        <View
+          style={[
+            styles.centerContainer,
+            { backgroundColor: theme.background },
+          ]}
+        >
+          <ActivityIndicator size="large" color={theme.primary} />
         </View>
       );
     }
 
     return (
-      <ScrollView
-        style={styles.dashboardContainer}
-        contentContainerStyle={{ paddingBottom: 40 }}
-      >
-        <Text style={styles.dashboardTitle}>Gotowy na trening?</Text>
-        <View style={styles.section}>
-          <Text style={styles.sectionHeader}>
-            Dzisiejszy plan ({DAY_NAMES[currentDayOfWeek]})
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+        <ScrollView
+          style={[
+            styles.dashboardContainer,
+            { backgroundColor: theme.background },
+          ]}
+          contentContainerStyle={{ paddingBottom: 40 }}
+        >
+          <Text style={[styles.dashboardTitle, { color: theme.text }]}>
+            Gotowy na trening?
           </Text>
-          {todayPlans.length > 0 ? (
-            todayPlans.map((tp) => (
-              <View
-                key={`${tp.planId}-${tp.day}`}
-                style={[
-                  styles.todayCard,
-                  tp.isCustom && styles.customTodayCard,
-                ]}
-              >
-                <View style={styles.cardHeaderRow}>
-                  <Text style={styles.todayCardTitle}>{tp.planName}</Text>
-                  {tp.isCustom && (
-                    <Text style={styles.privateBadgeTextSmall}>🔒 Własny</Text>
-                  )}
-                </View>
-                <Text style={styles.todayCardDesc}>
-                  {tp.exercises.length} ćwiczeń zaplanowanych na dzisiaj.
-                </Text>
-                <TouchableOpacity
-                  style={[
-                    styles.startTodayButton,
-                    tp.isCustom && styles.customStartBtn,
-                  ]}
-                  onPress={() =>
-                    handleStartFromDashboard(tp.exercises, tp.isCustom)
-                  }
-                >
-                  <Text style={styles.startTodayText}>
-                    Rozpocznij {DAY_NAMES[currentDayOfWeek]}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            ))
-          ) : (
-            <View style={styles.restDayCard}>
-              <Text style={styles.restDayTitle}>Dzień wolny!</Text>
-              <Text style={styles.restDayDesc}>
-                Nie masz dzisiaj w harmonogramie żadnego planu. Odpoczywaj lub
-                wybierz inny dzień z listy poniżej.
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {otherPlans.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionHeader}>
-              Wybierz inny dzień (Alternatywa)
+            <Text style={[styles.sectionHeader, { color: theme.textMuted }]}>
+              Dzisiejszy plan ({DAY_NAMES[currentDayOfWeek]})
             </Text>
-            {otherPlans.map((op, index) => (
-              <TouchableOpacity
-                key={`${op.planId}-${op.day}-${index}`}
-                style={[
-                  styles.otherCard,
-                  op.isCustom && styles.customOtherCard,
-                ]}
-                onPress={() =>
-                  handleStartFromDashboard(op.exercises, op.isCustom)
-                }
-              >
-                <View style={{ flex: 1 }}>
+            {todayPlans.length > 0 ? (
+              todayPlans.map((tp) => (
+                <View
+                  key={`${tp.planId}-${tp.day}`}
+                  style={[
+                    styles.todayCard,
+                    {
+                      backgroundColor: theme.surface,
+                      borderLeftColor: theme.primary,
+                    },
+                    tp.isCustom && { borderLeftColor: theme.secondary },
+                  ]}
+                >
                   <View style={styles.cardHeaderRow}>
-                    <Text style={styles.otherCardTitle}>{op.planName}</Text>
-                    {op.isCustom && (
-                      <Text style={styles.privateBadgeTextSmall}>🔒</Text>
+                    <Text
+                      style={[styles.todayCardTitle, { color: theme.text }]}
+                    >
+                      {tp.planName}
+                    </Text>
+                    {tp.isCustom && (
+                      <Text
+                        style={[
+                          styles.privateBadgeTextSmall,
+                          {
+                            backgroundColor: theme.badgeBg,
+                            color: theme.badgeText,
+                          },
+                        ]}
+                      >
+                        🔒 Własny
+                      </Text>
                     )}
                   </View>
-                  <Text style={styles.otherCardDesc}>
-                    {DAY_NAMES[op.day]} • {op.exercises.length} ćwiczeń
+                  <Text
+                    style={[styles.todayCardDesc, { color: theme.textMuted }]}
+                  >
+                    {tp.exercises.length} ćwiczeń zaplanowanych na dzisiaj.
                   </Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.startTodayButton,
+                      { backgroundColor: theme.primary },
+                      tp.isCustom && { backgroundColor: theme.secondary },
+                    ]}
+                    onPress={() =>
+                      handleStartFromDashboard(tp.exercises, tp.isCustom)
+                    }
+                  >
+                    <Text
+                      style={[
+                        styles.startTodayText,
+                        { color: theme.primaryText },
+                      ]}
+                    >
+                      Rozpocznij {DAY_NAMES[currentDayOfWeek]}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
-                <Text style={styles.arrowIcon}>➔</Text>
-              </TouchableOpacity>
-            ))}
+              ))
+            ) : (
+              <View
+                style={[styles.restDayCard, { backgroundColor: theme.surface }]}
+              >
+                <Text style={[styles.restDayTitle, { color: theme.text }]}>
+                  Dzień wolny!
+                </Text>
+                <Text style={[styles.restDayDesc, { color: theme.textMuted }]}>
+                  Nie masz dzisiaj w harmonogramie żadnego planu. Odpoczywaj lub
+                  wybierz inny dzień z listy poniżej.
+                </Text>
+              </View>
+            )}
           </View>
-        )}
-        <View style={styles.divider} />
-        <TouchableOpacity
-          style={styles.freeWorkoutButton}
-          onPress={startWorkout}
-        >
-          <Text style={styles.freeWorkoutText}>
-            Rozpocznij pusty trening (bez planu)
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
+
+          {otherPlans.length > 0 && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionHeader, { color: theme.textMuted }]}>
+                Wybierz inny dzień (Alternatywa)
+              </Text>
+              {otherPlans.map((op, index) => (
+                <TouchableOpacity
+                  key={`${op.planId}-${op.day}-${index}`}
+                  style={[
+                    styles.otherCard,
+                    {
+                      backgroundColor: theme.surface,
+                      borderColor: theme.border,
+                    },
+                    op.isCustom && {
+                      borderLeftWidth: 3,
+                      borderLeftColor: theme.secondary,
+                    },
+                  ]}
+                  onPress={() =>
+                    handleStartFromDashboard(op.exercises, op.isCustom)
+                  }
+                >
+                  <View style={{ flex: 1 }}>
+                    <View style={styles.cardHeaderRow}>
+                      <Text
+                        style={[styles.otherCardTitle, { color: theme.text }]}
+                      >
+                        {op.planName}
+                      </Text>
+                      {op.isCustom && (
+                        <Text
+                          style={[
+                            styles.privateBadgeTextSmall,
+                            {
+                              backgroundColor: theme.badgeBg,
+                              color: theme.badgeText,
+                              marginLeft: 5,
+                            },
+                          ]}
+                        >
+                          🔒
+                        </Text>
+                      )}
+                    </View>
+                    <Text
+                      style={[styles.otherCardDesc, { color: theme.textMuted }]}
+                    >
+                      - {DAY_NAMES[op.day]} ({op.exercises.length} ćwiczeń)
+                    </Text>
+                  </View>
+                  <Text style={[styles.arrowIcon, { color: theme.textMuted }]}>
+                    ➔
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+          <View style={[styles.divider, { backgroundColor: theme.border }]} />
+          <TouchableOpacity
+            style={[
+              styles.freeWorkoutButton,
+              {
+                backgroundColor: theme.surface,
+                borderColor: theme.border,
+                borderWidth: 1,
+              },
+            ]}
+            onPress={startWorkout}
+          >
+            <Text style={[styles.freeWorkoutText, { color: theme.text }]}>
+              Rozpocznij pusty trening (bez planu)
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={{ flex: 1 }}>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Trening w toku</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.surface }}>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: theme.background, paddingTop: 10 },
+        ]}
+      >
+        <View
+          style={[
+            styles.header,
+            {
+              backgroundColor: theme.surface,
+              borderBottomColor: theme.border,
+              borderBottomWidth: 1,
+              paddingBottom: 15,
+            },
+          ]}
+        >
+          <Text style={[styles.title, { color: theme.text }]}>
+            Trening w toku
+          </Text>
           <TouchableOpacity
-            style={[styles.dangerButton, isSaving && styles.disabledButton]}
+            style={[
+              styles.dangerButton,
+              { backgroundColor: theme.danger },
+              isSaving && styles.disabledButton,
+            ]}
             onPress={handleFinishWorkout}
             disabled={isSaving}
           >
             {isSaving ? (
-              <ActivityIndicator size="small" color="#fff" />
+              <ActivityIndicator size="small" color={theme.primaryText} />
             ) : (
-              <Text style={styles.buttonText}>Zakończ i zapisz</Text>
+              <Text style={[styles.buttonText, { color: theme.primaryText }]}>
+                Zakończ i zapisz
+              </Text>
             )}
           </TouchableOpacity>
         </View>
 
         <ScrollView style={styles.workoutArea}>
           {exercises.length === 0 ? (
-            <Text style={styles.emptyText}>
+            <Text style={[styles.emptyText, { color: theme.textMuted }]}>
               Brak ćwiczeń. Dodaj pierwsze ćwiczenie!
             </Text>
           ) : (
@@ -429,9 +533,17 @@ export const TrainingScreen = () => {
               const hasVideo = !!videoUrls[realDbId] || !!directVideoUrl;
 
               return (
-                <View key={ex.id} style={styles.exerciseCard}>
+                <View
+                  key={ex.id}
+                  style={[
+                    styles.exerciseCard,
+                    { backgroundColor: theme.surface },
+                  ]}
+                >
                   <View style={styles.exerciseHeader}>
-                    <Text style={styles.exerciseName}>{ex.name}</Text>
+                    <Text style={[styles.exerciseName, { color: theme.text }]}>
+                      {ex.name}
+                    </Text>
                     {hasVideo && (
                       <TouchableOpacity
                         onPress={() => {
@@ -452,21 +564,43 @@ export const TrainingScreen = () => {
                         <Ionicons
                           name="play-circle"
                           size={32}
-                          color="#e11d48"
+                          color={theme.primary}
                         />
                       </TouchableOpacity>
                     )}
                   </View>
 
                   <View style={styles.columnHeaders}>
-                    <Text style={styles.headerText}>Seria</Text>
-                    <Text style={styles.headerText}>
+                    <Text
+                      style={[styles.headerText, { color: theme.textMuted }]}
+                    >
+                      Seria
+                    </Text>
+                    <Text
+                      style={[styles.headerText, { color: theme.textMuted }]}
+                    >
                       {weightUnit === "kg" ? "Kg" : "Lbs"}
                     </Text>
-                    <Text style={styles.headerText}>Powt.</Text>
-                    <Text style={styles.headerText}>RPE</Text>
-                    <Text style={styles.headerText}>⏱</Text>
-                    <Text style={styles.headerText}>✔</Text>
+                    <Text
+                      style={[styles.headerText, { color: theme.textMuted }]}
+                    >
+                      Powt.
+                    </Text>
+                    <Text
+                      style={[styles.headerText, { color: theme.textMuted }]}
+                    >
+                      RPE
+                    </Text>
+                    <Text
+                      style={[styles.headerText, { color: theme.textMuted }]}
+                    >
+                      ⏱
+                    </Text>
+                    <Text
+                      style={[styles.headerText, { color: theme.textMuted }]}
+                    >
+                      ✔
+                    </Text>
                   </View>
 
                   {ex.sets.map((set, index) => (
@@ -479,10 +613,15 @@ export const TrainingScreen = () => {
                   ))}
 
                   <TouchableOpacity
-                    style={styles.addSetButton}
+                    style={[
+                      styles.addSetButton,
+                      { backgroundColor: theme.background },
+                    ]}
                     onPress={() => addSet(ex.id)}
                   >
-                    <Text style={styles.addSetText}>+ Dodaj serię</Text>
+                    <Text style={[styles.addSetText, { color: theme.primary }]}>
+                      + Dodaj serię
+                    </Text>
                   </TouchableOpacity>
                 </View>
               );
@@ -490,10 +629,17 @@ export const TrainingScreen = () => {
           )}
 
           <TouchableOpacity
-            style={styles.secondaryButton}
+            style={[
+              styles.secondaryButton,
+              {
+                backgroundColor: theme.surface,
+                borderColor: theme.border,
+                borderWidth: 1,
+              },
+            ]}
             onPress={() => setModalVisible(true)}
           >
-            <Text style={styles.secondaryButtonText}>
+            <Text style={[styles.secondaryButtonText, { color: theme.text }]}>
               + Dodaj dodatkowe ćwiczenie
             </Text>
           </TouchableOpacity>
@@ -507,13 +653,20 @@ export const TrainingScreen = () => {
 
       <Modal visible={activeVideoId !== null} animationType="fade" transparent>
         <View style={styles.videoOverlay}>
-          <View style={styles.videoContent}>
-            <View style={styles.videoHeader}>
-              <Text style={styles.videoTitle} numberOfLines={1}>
+          <View
+            style={[styles.videoContent, { backgroundColor: theme.surface }]}
+          >
+            <View
+              style={[styles.videoHeader, { borderBottomColor: theme.border }]}
+            >
+              <Text
+                style={[styles.videoTitle, { color: theme.text }]}
+                numberOfLines={1}
+              >
                 {activeVideoTitle}
               </Text>
               <TouchableOpacity onPress={() => setActiveVideoId(null)}>
-                <Ionicons name="close" size={28} color="#333" />
+                <Ionicons name="close" size={28} color={theme.text} />
               </TouchableOpacity>
             </View>
 
@@ -530,51 +683,31 @@ export const TrainingScreen = () => {
         </View>
       </Modal>
       <RestTimerBar />
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  centerContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f8f9fa",
-  },
-  container: { flex: 1, backgroundColor: "#f8f9fa", paddingTop: 50 },
-  dashboardContainer: {
-    flex: 1,
-    backgroundColor: "#f8f9fa",
-    padding: 20,
-    paddingTop: 60,
-  },
-  dashboardTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#212529",
-    marginBottom: 25,
-  },
+  centerContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  container: { flex: 1 },
+  dashboardContainer: { flex: 1, padding: 20, paddingTop: 30 },
+  dashboardTitle: { fontSize: 28, fontWeight: "bold", marginBottom: 25 },
   section: { marginBottom: 25 },
   sectionHeader: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "bold",
-    color: "#6c757d",
     marginBottom: 12,
     textTransform: "uppercase",
   },
   todayCard: {
-    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 20,
     borderLeftWidth: 5,
-    borderLeftColor: "#17a2b8",
     elevation: 3,
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  customTodayCard: { borderLeftColor: "#f39c12" },
   cardHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -583,75 +716,50 @@ const styles = StyleSheet.create({
   privateBadgeTextSmall: {
     fontSize: 12,
     fontWeight: "bold",
-    color: "#856404",
-    backgroundColor: "#fff3cd",
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
     marginLeft: 10,
     overflow: "hidden",
   },
-  todayCardTitle: { fontSize: 20, fontWeight: "bold", color: "#333" },
-  todayCardDesc: {
-    fontSize: 14,
-    color: "#666",
-    marginTop: 5,
-    marginBottom: 15,
-  },
+  todayCardTitle: { fontSize: 20, fontWeight: "bold" },
+  todayCardDesc: { fontSize: 14, marginTop: 5, marginBottom: 15 },
   startTodayButton: {
-    backgroundColor: "#17a2b8",
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",
   },
-  customStartBtn: { backgroundColor: "#343a40" },
-  startTodayText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-  restDayCard: {
-    backgroundColor: "#e9ecef",
-    borderRadius: 12,
-    padding: 20,
-    alignItems: "center",
-  },
-  restDayTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#495057",
-    marginBottom: 5,
-  },
-  restDayDesc: { fontSize: 14, color: "#6c757d", textAlign: "center" },
+  startTodayText: { fontWeight: "bold", fontSize: 16 },
+  restDayCard: { borderRadius: 12, padding: 20, alignItems: "center" },
+  restDayTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 5 },
+  restDayDesc: { fontSize: 14, textAlign: "center" },
   otherCard: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#fff",
     padding: 15,
     borderRadius: 10,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: "#eee",
   },
-  customOtherCard: { borderLeftWidth: 3, borderLeftColor: "#f39c12" },
-  otherCardTitle: { fontSize: 16, fontWeight: "bold", color: "#333" },
-  otherCardDesc: { fontSize: 13, color: "#666", marginTop: 3 },
-  arrowIcon: { fontSize: 20, color: "#adb5bd" },
-  divider: { height: 1, backgroundColor: "#dee2e6", marginVertical: 15 },
+  otherCardTitle: { fontSize: 16, fontWeight: "bold" },
+  otherCardDesc: { fontSize: 13, marginTop: 3 },
+  arrowIcon: { fontSize: 20 },
+  divider: { height: 1, marginVertical: 15 },
   freeWorkoutButton: {
-    backgroundColor: "#e2e8f0",
     paddingVertical: 15,
     borderRadius: 10,
     alignItems: "center",
   },
-  freeWorkoutText: { color: "#495057", fontWeight: "bold", fontSize: 15 },
+  freeWorkoutText: { fontWeight: "bold", fontSize: 15 },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    marginBottom: 20,
     alignItems: "center",
   },
-  title: { fontSize: 24, fontWeight: "bold", color: "#333" },
+  title: { fontSize: 24, fontWeight: "bold" },
   dangerButton: {
-    backgroundColor: "#dc3545",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -659,25 +767,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   disabledButton: { opacity: 0.7 },
-  buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
+  buttonText: { fontWeight: "bold", fontSize: 16 },
   secondaryButton: {
-    backgroundColor: "#e2e8f0",
     paddingVertical: 15,
     borderRadius: 10,
     alignItems: "center",
     margin: 20,
   },
-  secondaryButtonText: { color: "#333", fontWeight: "bold", fontSize: 16 },
+  secondaryButtonText: { fontWeight: "bold", fontSize: 16 },
   workoutArea: { flex: 1 },
-  emptyText: { textAlign: "center", color: "#666", marginTop: 50 },
+  emptyText: { textAlign: "center", marginTop: 50 },
   exerciseCard: {
-    backgroundColor: "#fff",
     padding: 15,
     marginHorizontal: 20,
     marginBottom: 15,
     borderRadius: 10,
     elevation: 2,
-    shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
@@ -688,7 +793,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 5,
   },
-  exerciseName: { fontSize: 18, fontWeight: "bold", color: "#333", flex: 1 },
+  exerciseName: { fontSize: 18, fontWeight: "bold", flex: 1 },
   columnHeaders: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -698,7 +803,6 @@ const styles = StyleSheet.create({
   },
   headerText: {
     fontSize: 12,
-    color: "#999",
     fontWeight: "bold",
     width: 38,
     textAlign: "center",
@@ -707,36 +811,23 @@ const styles = StyleSheet.create({
     marginTop: 15,
     paddingVertical: 10,
     alignItems: "center",
-    backgroundColor: "#f8f9fa",
     borderRadius: 8,
   },
-  addSetText: { color: "#17a2b8", fontWeight: "bold" },
+  addSetText: { fontWeight: "bold" },
   videoOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.8)",
     justifyContent: "center",
     alignItems: "center",
   },
-  videoContent: {
-    backgroundColor: "#fff",
-    width: "90%",
-    borderRadius: 12,
-    overflow: "hidden",
-  },
+  videoContent: { width: "90%", borderRadius: 12, overflow: "hidden" },
   videoHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
   },
-  videoTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-    flex: 1,
-    paddingRight: 10,
-  },
+  videoTitle: { fontSize: 18, fontWeight: "bold", flex: 1, paddingRight: 10 },
   videoWrapper: { width: "100%", backgroundColor: "#000" },
 });

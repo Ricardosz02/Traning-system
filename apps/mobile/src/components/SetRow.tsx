@@ -9,6 +9,8 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useWorkoutStore, WorkoutSet } from "../store/workoutStore";
 import { useSettingsStore } from "../store/settingsStore";
+import { useThemeStore } from "../store/themeStore";
+import { colors } from "../theme/colors";
 
 interface SetRowProps {
   exerciseId: string;
@@ -21,6 +23,9 @@ const KG_TO_LBS = 2.20462;
 export const SetRow = ({ exerciseId, item, index }: SetRowProps) => {
   const updateSet = useWorkoutStore((state) => state.updateSet);
   const { weightUnit } = useSettingsStore();
+
+  const { isDarkMode } = useThemeStore();
+  const theme = isDarkMode ? colors.dark : colors.light;
 
   const handleChange = (field: keyof WorkoutSet, value: string) => {
     const formattedValue = value.replace(",", ".");
@@ -50,39 +55,93 @@ export const SetRow = ({ exerciseId, item, index }: SetRowProps) => {
     displayWeight = (Math.round(weightToShow * 10) / 10).toString();
   }
 
+  const inputStyle = [
+    styles.input,
+    {
+      backgroundColor: isDarkMode ? "#2c2c2e" : "#f1f5f9",
+      color: item.completed ? (isDarkMode ? "#a1a1aa" : "#94a3b8") : theme.text,
+      borderColor: isDarkMode ? "#3a3a3c" : "#e2e8f0",
+    },
+  ];
+
+  const rpeInputStyle = [
+    styles.input,
+    {
+      backgroundColor: isDarkMode ? "#1e3a8a" : "#e0f2fe",
+      color: item.completed
+        ? isDarkMode
+          ? "#60a5fa"
+          : "#7dd3fc"
+        : isDarkMode
+          ? "#93c5fd"
+          : "#0369a1",
+      fontWeight: "bold" as const,
+      borderColor: isDarkMode ? "#1e3a8a" : "#bae6fd",
+    },
+  ];
+
+  const timeInputStyle = [
+    styles.input,
+    {
+      backgroundColor: isDarkMode ? "#451a03" : "#fef3c7",
+      color: item.completed
+        ? isDarkMode
+          ? "#fbbf24"
+          : "#fcd34d"
+        : isDarkMode
+          ? "#fde68a"
+          : "#92400e",
+      fontWeight: "bold" as const,
+      borderColor: isDarkMode ? "#451a03" : "#fde68a",
+    },
+  ];
+
   return (
-    <View style={[styles.row, item.completed && styles.rowCompleted]}>
-      <Text style={styles.setNumber}>{index + 1}</Text>
+    <View
+      style={[
+        styles.row,
+        { borderBottomColor: theme.border },
+        item.completed && {
+          backgroundColor: isDarkMode ? "rgba(34, 197, 94, 0.15)" : "#f0fdf4",
+        },
+      ]}
+    >
+      <Text style={[styles.setNumber, { color: theme.textMuted }]}>
+        {index + 1}
+      </Text>
 
       <View style={styles.inputContainer}>
         <TextInput
-          style={styles.input}
+          style={inputStyle}
           keyboardType="numeric"
           value={displayWeight}
           onChangeText={(text) => handleChange("weight", text)}
           placeholder={weightUnit}
+          placeholderTextColor={isDarkMode ? "#6b7280" : "#94a3b8"}
           editable={!item.completed}
         />
       </View>
 
       <View style={styles.inputContainer}>
         <TextInput
-          style={styles.input}
+          style={inputStyle}
           keyboardType="numeric"
           value={item.reps === 0 ? "" : item.reps.toString()}
           onChangeText={(text) => handleChange("reps", text)}
           placeholder="powt."
+          placeholderTextColor={isDarkMode ? "#6b7280" : "#94a3b8"}
           editable={!item.completed}
         />
       </View>
 
       <View style={styles.inputContainer}>
         <TextInput
-          style={[styles.input, styles.rpeInput]}
+          style={rpeInputStyle}
           keyboardType="numeric"
           value={item.rpe === 0 ? "" : item.rpe.toString()}
           onChangeText={(text) => handleChange("rpe", text)}
           placeholder="RPE"
+          placeholderTextColor={isDarkMode ? "#60a5fa" : "#7dd3fc"}
           maxLength={4}
           editable={!item.completed}
         />
@@ -90,7 +149,7 @@ export const SetRow = ({ exerciseId, item, index }: SetRowProps) => {
 
       <View style={styles.inputContainer}>
         <TextInput
-          style={[styles.input, styles.timeInput]}
+          style={timeInputStyle}
           keyboardType="numeric"
           value={
             item.restTime === 0 || item.restTime === undefined
@@ -99,19 +158,24 @@ export const SetRow = ({ exerciseId, item, index }: SetRowProps) => {
           }
           onChangeText={(text) => handleChange("restTime", text)}
           placeholder="sek"
+          placeholderTextColor={isDarkMode ? "#fbbf24" : "#fcd34d"}
           maxLength={4}
           editable={!item.completed}
         />
       </View>
 
       <TouchableOpacity
-        style={[styles.checkButton, item.completed && styles.checkButtonActive]}
+        style={[
+          styles.checkButton,
+          { backgroundColor: isDarkMode ? "#3f3f46" : "#f1f5f9" },
+          item.completed && { backgroundColor: "#22c55e" },
+        ]}
         onPress={toggleComplete}
       >
         <Ionicons
           name="checkmark"
           size={20}
-          color={item.completed ? "#fff" : "#ccc"}
+          color={item.completed ? "#fff" : isDarkMode ? "#71717a" : "#cbd5e1"}
         />
       </TouchableOpacity>
     </View>
@@ -125,16 +189,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  rowCompleted: {
-    backgroundColor: "#f0fdf4",
+    borderRadius: 8,
+    paddingHorizontal: 4,
   },
   setNumber: {
     width: 25,
     fontSize: 16,
     fontWeight: "bold",
-    color: "#666",
     textAlign: "center",
   },
   inputContainer: {
@@ -142,32 +203,19 @@ const styles = StyleSheet.create({
     marginHorizontal: 3,
   },
   input: {
-    backgroundColor: "#f1f5f9",
+    borderWidth: 1,
     borderRadius: 6,
     paddingVertical: 8,
     paddingHorizontal: 8,
     textAlign: "center",
     fontSize: 14,
-    color: "#333",
-  },
-  rpeInput: {
-    backgroundColor: "#e0f2fe",
-    fontWeight: "bold",
-  },
-  timeInput: {
-    backgroundColor: "#fef3c7",
-    fontWeight: "bold",
   },
   checkButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#f1f5f9",
     justifyContent: "center",
     alignItems: "center",
     marginLeft: 5,
-  },
-  checkButtonActive: {
-    backgroundColor: "#22c55e",
   },
 });

@@ -10,6 +10,8 @@ import {
   Modal,
 } from "react-native";
 import { signIn, resetPassword } from "../services/authService";
+import { useThemeStore } from "../store/themeStore";
+import { colors } from "../theme/colors";
 
 export const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState("");
@@ -19,6 +21,9 @@ export const LoginScreen = ({ navigation }: any) => {
   const [isResetModalVisible, setIsResetModalVisible] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
+
+  const { isDarkMode } = useThemeStore();
+  const theme = isDarkMode ? colors.dark : colors.light;
 
   const handleLogin = async () => {
     const sanitizedEmail = email.trim();
@@ -66,14 +71,25 @@ export const LoginScreen = ({ navigation }: any) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Witaj w Aplikacji</Text>
-      <Text style={styles.subtitle}>Zaloguj się, aby kontynuować trening</Text>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <Text style={[styles.title, { color: theme.text }]}>
+        Witaj w Aplikacji
+      </Text>
+      <Text style={[styles.subtitle, { color: theme.textMuted }]}>
+        Zaloguj się, aby kontynuować trening
+      </Text>
 
       <TextInput
-        style={styles.input}
+        style={[
+          styles.input,
+          {
+            backgroundColor: theme.surface,
+            borderColor: theme.border,
+            color: theme.text,
+          },
+        ]}
         placeholder="Adres e-mail"
-        placeholderTextColor="#999"
+        placeholderTextColor={theme.textMuted}
         keyboardType="email-address"
         autoCapitalize="none"
         autoCorrect={false}
@@ -82,9 +98,16 @@ export const LoginScreen = ({ navigation }: any) => {
       />
 
       <TextInput
-        style={styles.input}
+        style={[
+          styles.input,
+          {
+            backgroundColor: theme.surface,
+            borderColor: theme.border,
+            color: theme.text,
+          },
+        ]}
         placeholder="Hasło"
-        placeholderTextColor="#999"
+        placeholderTextColor={theme.textMuted}
         secureTextEntry
         value={password}
         onChangeText={setPassword}
@@ -94,18 +117,26 @@ export const LoginScreen = ({ navigation }: any) => {
         style={styles.forgotPasswordContainer}
         onPress={() => setIsResetModalVisible(true)}
       >
-        <Text style={styles.forgotPasswordText}>Zapomniałeś hasła?</Text>
+        <Text style={[styles.forgotPasswordText, { color: theme.textMuted }]}>
+          Zapomniałeś hasła?
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
+        style={[
+          styles.button,
+          { backgroundColor: theme.primary },
+          loading && { opacity: 0.7 },
+        ]}
         onPress={handleLogin}
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={theme.primaryText} />
         ) : (
-          <Text style={styles.buttonText}>Zaloguj</Text>
+          <Text style={[styles.buttonText, { color: theme.primaryText }]}>
+            Zaloguj
+          </Text>
         )}
       </TouchableOpacity>
 
@@ -113,7 +144,9 @@ export const LoginScreen = ({ navigation }: any) => {
         style={styles.linkButton}
         onPress={() => navigation.navigate("Register")}
       >
-        <Text style={styles.linkText}>Nie masz konta? Zarejestruj się</Text>
+        <Text style={[styles.linkText, { color: theme.primary }]}>
+          Nie masz konta? Zarejestruj się
+        </Text>
       </TouchableOpacity>
 
       <Modal
@@ -123,18 +156,27 @@ export const LoginScreen = ({ navigation }: any) => {
         onRequestClose={() => setIsResetModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Resetowanie hasła</Text>
-            <Text style={styles.modalSubtitle}>
+          <View style={[styles.modalCard, { backgroundColor: theme.surface }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>
+              Resetowanie hasła
+            </Text>
+            <Text style={[styles.modalSubtitle, { color: theme.textMuted }]}>
               Podaj adres e-mail przypisany do Twojego konta. Wyślemy Ci
               bezpieczny link, dzięki któremu w kilku krokach ustawisz nowe
               hasło i odzyskasz dostęp.
             </Text>
 
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: theme.background,
+                  borderColor: theme.border,
+                  color: theme.text,
+                },
+              ]}
               placeholder="Twój adres e-mail"
-              placeholderTextColor="#999"
+              placeholderTextColor={theme.textMuted}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
@@ -148,18 +190,29 @@ export const LoginScreen = ({ navigation }: any) => {
                 onPress={() => setIsResetModalVisible(false)}
                 disabled={resetLoading}
               >
-                <Text style={styles.cancelButtonText}>Anuluj</Text>
+                <Text
+                  style={[styles.cancelButtonText, { color: theme.textMuted }]}
+                >
+                  Anuluj
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.sendButton}
+                style={[styles.sendButton, { backgroundColor: theme.primary }]}
                 onPress={handleSendResetLink}
                 disabled={resetLoading}
               >
                 {resetLoading ? (
-                  <ActivityIndicator color="#fff" size="small" />
+                  <ActivityIndicator color={theme.primaryText} size="small" />
                 ) : (
-                  <Text style={styles.sendButtonText}>Wyślij link</Text>
+                  <Text
+                    style={[
+                      styles.sendButtonText,
+                      { color: theme.primaryText },
+                    ]}
+                  >
+                    Wyślij link
+                  </Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -175,49 +228,37 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     padding: 20,
-    backgroundColor: "#fff",
   },
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#333",
     marginBottom: 5,
   },
   subtitle: {
     fontSize: 16,
-    color: "#666",
     marginBottom: 30,
   },
   input: {
-    backgroundColor: "#f5f5f5",
     padding: 15,
     borderRadius: 8,
     marginBottom: 15,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: "#eee",
-    color: "#333",
   },
   forgotPasswordContainer: {
     alignSelf: "flex-end",
     marginBottom: 20,
   },
   forgotPasswordText: {
-    color: "#666",
     fontSize: 14,
     fontWeight: "500",
   },
   button: {
-    backgroundColor: "#17a2b8",
     padding: 15,
     borderRadius: 8,
     alignItems: "center",
   },
-  buttonDisabled: {
-    backgroundColor: "#93d3dd",
-  },
   buttonText: {
-    color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
   },
@@ -226,7 +267,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   linkText: {
-    color: "#17a2b8",
     fontSize: 15,
     fontWeight: "600",
   },
@@ -237,7 +277,6 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalCard: {
-    backgroundColor: "#fff",
     padding: 25,
     borderRadius: 15,
     elevation: 5,
@@ -249,12 +288,10 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#333",
     marginBottom: 10,
   },
   modalSubtitle: {
     fontSize: 14,
-    color: "#555",
     lineHeight: 22,
     marginBottom: 20,
   },
@@ -269,12 +306,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   cancelButtonText: {
-    color: "#666",
     fontWeight: "bold",
     fontSize: 15,
   },
   sendButton: {
-    backgroundColor: "#17a2b8",
     paddingVertical: 12,
     paddingHorizontal: 18,
     borderRadius: 8,
@@ -283,7 +318,6 @@ const styles = StyleSheet.create({
     minWidth: 100,
   },
   sendButtonText: {
-    color: "#fff",
     fontWeight: "bold",
     fontSize: 15,
   },

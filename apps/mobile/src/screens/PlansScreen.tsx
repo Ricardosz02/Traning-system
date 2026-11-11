@@ -20,6 +20,7 @@ import {
 } from "../services/planService";
 import { AppStackParamList } from "../types/navigation.types";
 import { colors } from "../theme/colors";
+import { useThemeStore } from "../store/themeStore";
 
 type CombinedPlan = {
   id: string;
@@ -35,7 +36,7 @@ export const PlansScreen = () => {
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
 
   const systemColorScheme = useColorScheme();
-  const isDark = systemColorScheme === "dark";
+  const { isDarkMode: isDark } = useThemeStore();
   const theme = isDark ? colors.dark : colors.light;
 
   const [plans, setPlans] = useState<CombinedPlan[]>([]);

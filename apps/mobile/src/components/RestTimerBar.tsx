@@ -2,10 +2,15 @@ import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useWorkoutStore } from "../store/workoutStore";
+import { useThemeStore } from "../store/themeStore";
+import { colors } from "../theme/colors";
 
 export const RestTimerBar = () => {
   const { activeTimerEndTime, stopTimer, addTimeToTimer } = useWorkoutStore();
   const [timeLeft, setTimeLeft] = useState<number>(0);
+
+  const { isDarkMode } = useThemeStore();
+  const theme = isDarkMode ? colors.dark : colors.light;
 
   useEffect(() => {
     if (!activeTimerEndTime) {
@@ -35,33 +40,77 @@ export const RestTimerBar = () => {
   const formattedTime = `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: isDarkMode ? theme.surface : theme.primary },
+      ]}
+    >
       <TouchableOpacity
-        style={styles.timeAdjustBtn}
+        style={[
+          styles.timeAdjustBtn,
+          {
+            backgroundColor: isDarkMode
+              ? theme.border
+              : "rgba(255,255,255,0.2)",
+          },
+        ]}
         onPress={() => addTimeToTimer(-30)}
       >
-        <Text style={styles.timeAdjustText}>-30s</Text>
+        <Text
+          style={[
+            styles.timeAdjustText,
+            { color: isDarkMode ? theme.text : theme.primaryText },
+          ]}
+        >
+          -30s
+        </Text>
       </TouchableOpacity>
 
       <View style={styles.centerBlock}>
         <Ionicons
           name="timer-outline"
           size={20}
-          color="#fff"
+          color={isDarkMode ? theme.text : theme.primaryText}
           style={styles.icon}
         />
-        <Text style={styles.timerText}>{formattedTime}</Text>
+        <Text
+          style={[
+            styles.timerText,
+            { color: isDarkMode ? theme.text : theme.primaryText },
+          ]}
+        >
+          {formattedTime}
+        </Text>
       </View>
 
       <TouchableOpacity
-        style={styles.timeAdjustBtn}
+        style={[
+          styles.timeAdjustBtn,
+          {
+            backgroundColor: isDarkMode
+              ? theme.border
+              : "rgba(255,255,255,0.2)",
+          },
+        ]}
         onPress={() => addTimeToTimer(30)}
       >
-        <Text style={styles.timeAdjustText}>+30s</Text>
+        <Text
+          style={[
+            styles.timeAdjustText,
+            { color: isDarkMode ? theme.text : theme.primaryText },
+          ]}
+        >
+          +30s
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.closeBtn} onPress={stopTimer}>
-        <Ionicons name="close" size={24} color="#fff" />
+        <Ionicons
+          name="close"
+          size={24}
+          color={isDarkMode ? theme.text : theme.primaryText}
+        />
       </TouchableOpacity>
     </View>
   );
@@ -73,7 +122,6 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 20,
     right: 20,
-    backgroundColor: "#334155",
     borderRadius: 12,
     flexDirection: "row",
     alignItems: "center",
@@ -85,14 +133,15 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.1)",
   },
   timeAdjustBtn: {
-    backgroundColor: "#475569",
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 8,
   },
-  timeAdjustText: { color: "#e2e8f0", fontWeight: "bold" },
+  timeAdjustText: { fontWeight: "bold" },
   centerBlock: {
     flexDirection: "row",
     alignItems: "center",
@@ -101,7 +150,6 @@ const styles = StyleSheet.create({
   timerText: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#fff",
     fontVariant: ["tabular-nums"],
   },
   closeBtn: {

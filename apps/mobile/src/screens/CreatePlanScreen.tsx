@@ -11,12 +11,15 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  SafeAreaView,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useAuth } from "../contexts/AuthContext";
 import { createPlanWithExercises } from "../services/planService";
 import { ExerciseSelectorModal } from "../components/ExerciseSelectorModal";
 import { Exercise } from "../services/exerciseService";
+import { useThemeStore } from "../store/themeStore";
+import { colors } from "../theme/colors";
 
 interface DraftExercise {
   exercise_id: string;
@@ -37,18 +40,13 @@ const DAYS = [
   { id: 7, name: "Nie" },
 ];
 
-const generateTempUUID = () => {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-};
-
 export const CreatePlanScreen = () => {
   const navigation = useNavigation();
   const route = useRoute<any>();
   const { user } = useAuth();
+
+  const { isDarkMode } = useThemeStore();
+  const theme = isDarkMode ? colors.dark : colors.light;
 
   const [planName, setPlanName] = useState("");
   const [description, setDescription] = useState("");
@@ -66,7 +64,7 @@ export const CreatePlanScreen = () => {
   useEffect(() => {
     if (route.params?.generatedPlan && route.params?.isFromAI) {
       const aiExercises: DraftExercise[] = route.params.generatedPlan.map(
-        (ex: any, index: number) => ({
+        (ex: any) => ({
           exercise_id: ex.exercise_id,
           name: ex.name,
           day_of_week: selectedDay,
@@ -203,220 +201,342 @@ export const CreatePlanScreen = () => {
     .filter((ex) => ex.day_of_week === selectedDay);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.cancelText}>Anuluj</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>Kreator Planu</Text>
-        <TouchableOpacity onPress={handleSavePlan} disabled={isSaving}>
-          {isSaving ? (
-            <ActivityIndicator size="small" color="#17a2b8" />
-          ) : (
-            <Text style={styles.saveText}>Zapisz</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView style={styles.content}>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Nazwa planu *</Text>
-          <TextInput
-            style={styles.input}
-            value={planName}
-            onChangeText={setPlanName}
-            placeholder="np. FBW 3-dniowy"
-          />
-        </View>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Krótki opis</Text>
-          <TextInput
-            style={styles.input}
-            value={description}
-            onChangeText={setDescription}
-            placeholder="Opcjonalnie..."
-          />
-        </View>
-
-        <Text style={styles.sectionTitle}>Harmonogram tygodniowy</Text>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.daysScroll}
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.surface }}>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <View
+          style={[
+            styles.header,
+            { backgroundColor: theme.surface, borderBottomColor: theme.border },
+          ]}
         >
-          {DAYS.map((day) => (
-            <TouchableOpacity
-              key={day.id}
-              style={[
-                styles.dayBadge,
-                selectedDay === day.id && styles.dayBadgeActive,
-              ]}
-              onPress={() => setSelectedDay(day.id)}
-            >
-              <Text
-                style={[
-                  styles.dayText,
-                  selectedDay === day.id && styles.dayTextActive,
-                ]}
-              >
-                {day.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        <View style={styles.dayContainer}>
-          <Text style={styles.dayTitle}>
-            Ćwiczenia - {DAYS.find((d) => d.id === selectedDay)?.name}
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={[styles.cancelText, { color: theme.textMuted }]}>
+              Anuluj
+            </Text>
+          </TouchableOpacity>
+          <Text style={[styles.title, { color: theme.text }]}>
+            Kreator Planu
           </Text>
-
-          {visibleExercises.length === 0 ? (
-            <Text style={styles.emptyText}>
-              Dzień wolny. Brak zaplanowanych ćwiczeń.
-            </Text>
-          ) : (
-            visibleExercises.map((ex) => (
-              <View key={ex.originalIndex} style={styles.exerciseCardWrapper}>
-                <TouchableOpacity
-                  style={{ flex: 1 }}
-                  onPress={() => openEditModal(ex.originalIndex)}
-                >
-                  <Text style={styles.exName}>{ex.name}</Text>
-                  <Text style={styles.exDetails}>
-                    Serie: {ex.target_sets} | Powtórzenia: {ex.target_reps} |
-                    Przerwa: {ex.rest_time}s
-                  </Text>
-                  <Text style={styles.editHint}>Kliknij, aby edytować</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => handleRemoveExercise(ex.originalIndex)}
-                  style={styles.removeBtn}
-                >
-                  <Text style={styles.removeText}>X</Text>
-                </TouchableOpacity>
-              </View>
-            ))
-          )}
-
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => setModalVisible(true)}
-          >
-            <Text style={styles.addButtonText}>
-              + Dodaj ćwiczenie do{" "}
-              {DAYS.find((d) => d.id === selectedDay)?.name}
-            </Text>
+          <TouchableOpacity onPress={handleSavePlan} disabled={isSaving}>
+            {isSaving ? (
+              <ActivityIndicator size="small" color={theme.primary} />
+            ) : (
+              <Text style={[styles.saveText, { color: theme.primary }]}>
+                Zapisz
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity
-          style={styles.customPlanButton}
-          onPress={() => (navigation as any).navigate("WorkoutCreator")}
-        >
-          <Text style={styles.customPlanButtonText}>+ Stwórz własny plan</Text>
-        </TouchableOpacity>
+        <ScrollView style={styles.content}>
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: theme.text }]}>
+              Nazwa planu *
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: theme.surface,
+                  borderColor: theme.border,
+                  color: theme.text,
+                },
+              ]}
+              value={planName}
+              onChangeText={setPlanName}
+              placeholder="np. FBW 3-dniowy"
+              placeholderTextColor={theme.textMuted}
+            />
+          </View>
+          <View style={styles.inputGroup}>
+            <Text style={[styles.label, { color: theme.text }]}>
+              Krótki opis
+            </Text>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: theme.surface,
+                  borderColor: theme.border,
+                  color: theme.text,
+                },
+              ]}
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Opcjonalnie..."
+              placeholderTextColor={theme.textMuted}
+            />
+          </View>
 
-        <TouchableOpacity
-          style={styles.aiButton}
-          onPress={() => (navigation as any).navigate("AiGeneratorScreen")}
-        >
-          <Text style={styles.aiButtonText}>Wygeneruj plan z AI</Text>
-        </TouchableOpacity>
-      </ScrollView>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>
+            Harmonogram tygodniowy
+          </Text>
 
-      <ExerciseSelectorModal
-        visible={isModalVisible}
-        onClose={() => setModalVisible(false)}
-        onSelect={handleAddExercise}
-      />
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.daysScroll}
+          >
+            {DAYS.map((day) => (
+              <TouchableOpacity
+                key={day.id}
+                style={[
+                  styles.dayBadge,
+                  {
+                    backgroundColor: theme.surface,
+                    borderColor: theme.border,
+                    borderWidth: 1,
+                  },
+                  selectedDay === day.id && {
+                    backgroundColor: theme.primary,
+                    borderColor: theme.primary,
+                  },
+                ]}
+                onPress={() => setSelectedDay(day.id)}
+              >
+                <Text
+                  style={[
+                    styles.dayText,
+                    { color: theme.text },
+                    selectedDay === day.id && { color: theme.primaryText },
+                  ]}
+                >
+                  {day.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
 
-      <Modal visible={editingIndex !== null} animationType="fade" transparent>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.modalOverlay}
-        >
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Edytuj parametry</Text>
-            <Text style={styles.modalSubtitle}>
-              {editingIndex !== null ? draftExercises[editingIndex]?.name : ""}
+          <View
+            style={[styles.dayContainer, { backgroundColor: theme.surface }]}
+          >
+            <Text style={[styles.dayTitle, { color: theme.text }]}>
+              Ćwiczenia - {DAYS.find((d) => d.id === selectedDay)?.name}
             </Text>
 
-            <Text style={styles.label}>Liczba serii</Text>
-            <TextInput
-              style={styles.input}
-              value={editSets}
-              onChangeText={setEditSets}
-              keyboardType="numeric"
-            />
+            {visibleExercises.length === 0 ? (
+              <Text style={[styles.emptyText, { color: theme.textMuted }]}>
+                Dzień wolny. Brak zaplanowanych ćwiczeń.
+              </Text>
+            ) : (
+              visibleExercises.map((ex) => (
+                <View
+                  key={ex.originalIndex}
+                  style={[
+                    styles.exerciseCardWrapper,
+                    {
+                      backgroundColor: theme.background,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                >
+                  <TouchableOpacity
+                    style={{ flex: 1 }}
+                    onPress={() => openEditModal(ex.originalIndex)}
+                  >
+                    <Text style={[styles.exName, { color: theme.text }]}>
+                      {ex.name}
+                    </Text>
+                    <Text
+                      style={[styles.exDetails, { color: theme.textMuted }]}
+                    >
+                      Serie: {ex.target_sets} | Powtórzenia: {ex.target_reps} |
+                      Przerwa: {ex.rest_time}s
+                    </Text>
+                    <Text
+                      style={[
+                        styles.editHint,
+                        { color: theme.textMuted, opacity: 0.7 },
+                      ]}
+                    >
+                      Kliknij, aby edytować
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleRemoveExercise(ex.originalIndex)}
+                    style={styles.removeBtn}
+                  >
+                    <Text style={[styles.removeText, { color: theme.danger }]}>
+                      X
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ))
+            )}
 
-            <Text style={styles.label}>Zakres powtórzeń (np. 8-12)</Text>
-            <TextInput
-              style={styles.input}
-              value={editReps}
-              onChangeText={setEditReps}
-            />
-
-            <Text style={styles.label}>Przerwa (sekundy)</Text>
-            <TextInput
-              style={styles.input}
-              value={editRestTime}
-              onChangeText={setEditRestTime}
-              keyboardType="numeric"
-              placeholder="np. 90"
-            />
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                onPress={() => setEditingIndex(null)}
-                style={styles.modalCancelBtn}
-              >
-                <Text style={styles.modalCancelText}>Anuluj</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={saveExerciseEdit}
-                style={styles.modalSaveBtn}
-              >
-                <Text style={styles.modalSaveText}>Zapisz</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={[styles.addButton, { backgroundColor: theme.badgeBg }]}
+              onPress={() => setModalVisible(true)}
+            >
+              <Text style={[styles.addButtonText, { color: theme.badgeText }]}>
+                + Dodaj ćwiczenie do{" "}
+                {DAYS.find((d) => d.id === selectedDay)?.name}
+              </Text>
+            </TouchableOpacity>
           </View>
-        </KeyboardAvoidingView>
-      </Modal>
-    </View>
+
+          <TouchableOpacity
+            style={[
+              styles.customPlanButton,
+              { backgroundColor: theme.secondary },
+            ]}
+            onPress={() => (navigation as any).navigate("WorkoutCreator")}
+          >
+            <Text
+              style={[
+                styles.customPlanButtonText,
+                { color: theme.primaryText },
+              ]}
+            >
+              + Stwórz własny plan
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.aiButton, { backgroundColor: "#2845eb" }]}
+            onPress={() => (navigation as any).navigate("AiGeneratorScreen")}
+          >
+            <Text style={[styles.aiButtonText, { color: theme.primaryText }]}>
+              Wygeneruj plan z AI
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+
+        <ExerciseSelectorModal
+          visible={isModalVisible}
+          onClose={() => setModalVisible(false)}
+          onSelect={handleAddExercise}
+        />
+
+        <Modal visible={editingIndex !== null} animationType="fade" transparent>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={styles.modalOverlay}
+          >
+            <View
+              style={[styles.modalContent, { backgroundColor: theme.surface }]}
+            >
+              <Text style={[styles.modalTitle, { color: theme.text }]}>
+                Edytuj parametry
+              </Text>
+              <Text style={[styles.modalSubtitle, { color: theme.textMuted }]}>
+                {editingIndex !== null
+                  ? draftExercises[editingIndex]?.name
+                  : ""}
+              </Text>
+
+              <Text style={[styles.label, { color: theme.text }]}>
+                Liczba serii
+              </Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: theme.background,
+                    borderColor: theme.border,
+                    color: theme.text,
+                  },
+                ]}
+                value={editSets}
+                onChangeText={setEditSets}
+                keyboardType="numeric"
+                placeholderTextColor={theme.textMuted}
+              />
+
+              <Text style={[styles.label, { color: theme.text }]}>
+                Zakres powtórzeń (np. 8-12)
+              </Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: theme.background,
+                    borderColor: theme.border,
+                    color: theme.text,
+                  },
+                ]}
+                value={editReps}
+                onChangeText={setEditReps}
+                placeholderTextColor={theme.textMuted}
+              />
+
+              <Text style={[styles.label, { color: theme.text }]}>
+                Przerwa (sekundy)
+              </Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: theme.background,
+                    borderColor: theme.border,
+                    color: theme.text,
+                  },
+                ]}
+                value={editRestTime}
+                onChangeText={setEditRestTime}
+                keyboardType="numeric"
+                placeholder="np. 90"
+                placeholderTextColor={theme.textMuted}
+              />
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  onPress={() => setEditingIndex(null)}
+                  style={styles.modalCancelBtn}
+                >
+                  <Text
+                    style={[styles.modalCancelText, { color: theme.textMuted }]}
+                  >
+                    Anuluj
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={saveExerciseEdit}
+                  style={[
+                    styles.modalSaveBtn,
+                    { backgroundColor: theme.primary },
+                  ]}
+                >
+                  <Text
+                    style={[styles.modalSaveText, { color: theme.primaryText }]}
+                  >
+                    Zapisz
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </Modal>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fa" },
+  container: { flex: 1 },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     padding: 20,
-    paddingTop: 50,
-    backgroundColor: "#fff",
+    paddingTop: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
     alignItems: "center",
   },
-  cancelText: { color: "#666", fontSize: 16 },
-  title: { fontSize: 18, fontWeight: "bold", color: "#333" },
-  saveText: { color: "#17a2b8", fontSize: 16, fontWeight: "bold" },
+  cancelText: { fontSize: 16 },
+  title: { fontSize: 18, fontWeight: "bold" },
+  saveText: { fontSize: 16, fontWeight: "bold" },
   content: { padding: 20 },
   inputGroup: { marginBottom: 15 },
-  label: { fontSize: 14, fontWeight: "bold", color: "#555", marginBottom: 5 },
+  label: { fontSize: 14, fontWeight: "bold", marginBottom: 5 },
   input: {
-    backgroundColor: "#fff",
     padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#ddd",
     fontSize: 16,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
     marginTop: 10,
     marginBottom: 10,
   },
@@ -424,15 +544,11 @@ const styles = StyleSheet.create({
   dayBadge: {
     paddingVertical: 8,
     paddingHorizontal: 15,
-    backgroundColor: "#e9ecef",
     borderRadius: 20,
     marginRight: 10,
   },
-  dayBadgeActive: { backgroundColor: "#17a2b8" },
-  dayText: { color: "#495057", fontWeight: "bold" },
-  dayTextActive: { color: "#fff" },
+  dayText: { fontWeight: "bold" },
   dayContainer: {
-    backgroundColor: "#fff",
     padding: 15,
     borderRadius: 10,
     minHeight: 200,
@@ -440,11 +556,9 @@ const styles = StyleSheet.create({
   dayTitle: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#333",
     marginBottom: 15,
   },
   emptyText: {
-    color: "#999",
     fontStyle: "italic",
     marginBottom: 20,
     textAlign: "center",
@@ -453,28 +567,24 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#f8f9fa",
     padding: 12,
     borderRadius: 8,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: "#eee",
   },
-  exName: { fontSize: 15, fontWeight: "bold", color: "#333" },
-  exDetails: { fontSize: 13, color: "#444", marginTop: 4, fontWeight: "500" },
-  editHint: { fontSize: 11, color: "#aaa", marginTop: 4 },
+  exName: { fontSize: 15, fontWeight: "bold" },
+  exDetails: { fontSize: 13, marginTop: 4, fontWeight: "500" },
+  editHint: { fontSize: 11, marginTop: 4 },
   removeBtn: { padding: 10, paddingRight: 0 },
-  removeText: { color: "#dc3545", fontWeight: "bold", fontSize: 18 },
+  removeText: { fontWeight: "bold", fontSize: 18 },
   addButton: {
     paddingVertical: 12,
-    backgroundColor: "#e0f7fa",
     borderRadius: 8,
     alignItems: "center",
     marginTop: 10,
   },
-  addButtonText: { color: "#00838f", fontWeight: "bold" },
+  addButtonText: { fontWeight: "bold" },
   customPlanButton: {
-    backgroundColor: "#17a2b8",
     padding: 16,
     borderRadius: 8,
     alignItems: "center",
@@ -487,12 +597,10 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   customPlanButtonText: {
-    color: "white",
     fontWeight: "bold",
     fontSize: 15,
   },
   aiButton: {
-    backgroundColor: "#2845eb",
     padding: 16,
     borderRadius: 8,
     alignItems: "center",
@@ -504,7 +612,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   aiButtonText: {
-    color: "white",
     fontWeight: "bold",
     fontSize: 15,
   },
@@ -515,7 +622,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContent: {
-    backgroundColor: "#fff",
     padding: 20,
     borderRadius: 12,
     width: "85%",
@@ -523,22 +629,20 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
     marginBottom: 5,
   },
-  modalSubtitle: { fontSize: 14, color: "#666", marginBottom: 20 },
+  modalSubtitle: { fontSize: 14, marginBottom: 20 },
   modalButtons: {
     flexDirection: "row",
     justifyContent: "flex-end",
     marginTop: 10,
   },
   modalCancelBtn: { padding: 10, marginRight: 10 },
-  modalCancelText: { color: "#666", fontWeight: "bold", fontSize: 16 },
+  modalCancelText: { fontWeight: "bold", fontSize: 16 },
   modalSaveBtn: {
-    backgroundColor: "#17a2b8",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
   },
-  modalSaveText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
+  modalSaveText: { fontWeight: "bold", fontSize: 16 },
 });
