@@ -2,15 +2,15 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
+import { useColorScheme } from "react-native";
 
-import { HomeScreen } from "../screens/HomeScreen";
 import { TrainingScreen } from "../screens/TrainingScreen";
 import { ProfileScreen } from "../screens/ProfileScreen";
 import { PlansScreen } from "../screens/PlansScreen";
 import { MeasurementsScreen } from "../screens/MeasurementsScreen";
+import { colors } from "../theme/colors";
 
 export type TabParamList = {
-  Katalog: undefined;
   Plany: undefined;
   Trening: undefined;
   Profil: undefined;
@@ -37,15 +37,18 @@ const ProfileStackNavigator = () => {
 };
 
 export const TabNavigator = () => {
+  const systemColorScheme = useColorScheme();
+  const isDark = systemColorScheme === "dark";
+  const theme = isDark ? colors.dark : colors.light;
+
   return (
     <Tab.Navigator
+      initialRouteName="Trening"
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap;
 
-          if (route.name === "Katalog") {
-            iconName = focused ? "list" : "list-outline";
-          } else if (route.name === "Plany") {
+          if (route.name === "Plany") {
             iconName = focused ? "calendar" : "calendar-outline";
           } else if (route.name === "Trening") {
             iconName = focused ? "barbell" : "barbell-outline";
@@ -57,12 +60,15 @@ export const TabNavigator = () => {
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: "#17a2b8",
-        tabBarInactiveTintColor: "gray",
+        tabBarActiveTintColor: theme.primary,
+        tabBarInactiveTintColor: theme.textMuted,
+        tabBarStyle: {
+          backgroundColor: theme.surface,
+          borderTopColor: theme.border,
+        },
         headerShown: false,
       })}
     >
-      <Tab.Screen name="Katalog" component={HomeScreen} />
       <Tab.Screen name="Plany" component={PlansScreen} />
       <Tab.Screen name="Trening" component={TrainingScreen} />
       <Tab.Screen name="Profil" component={ProfileStackNavigator} />

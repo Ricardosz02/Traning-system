@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
+  useColorScheme,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -18,6 +19,7 @@ import {
   deletePlan,
 } from "../services/planService";
 import { AppStackParamList } from "../types/navigation.types";
+import { colors } from "../theme/colors";
 
 type CombinedPlan = {
   id: string;
@@ -31,6 +33,10 @@ export const PlansScreen = () => {
   const { user } = useAuth();
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
+
+  const systemColorScheme = useColorScheme();
+  const isDark = systemColorScheme === "dark";
+  const theme = isDark ? colors.dark : colors.light;
 
   const [plans, setPlans] = useState<CombinedPlan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -115,21 +121,30 @@ export const PlansScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Twoje Plany Treningowe</Text>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: theme.surface, borderBottomColor: theme.border },
+        ]}
+      >
+        <Text style={[styles.title, { color: theme.text }]}>
+          Twoje Plany Treningowe
+        </Text>
         <TouchableOpacity
-          style={styles.addButton}
+          style={[styles.addButton, { backgroundColor: theme.primary }]}
           onPress={() => navigation.navigate("CreatePlan")}
         >
-          <Text style={styles.addButtonText}>+ Nowy Plan</Text>
+          <Text style={[styles.addButtonText, { color: theme.primaryText }]}>
+            + Nowy Plan
+          </Text>
         </TouchableOpacity>
       </View>
 
       {loading ? (
         <ActivityIndicator
           size="large"
-          color="#17a2b8"
+          color={theme.primary}
           style={{ marginTop: 20 }}
         />
       ) : (
@@ -141,17 +156,28 @@ export const PlansScreen = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              colors={["#17a2b8"]}
+              colors={[theme.primary]}
+              tintColor={theme.primary}
             />
           }
           ListEmptyComponent={
-            <Text style={styles.emptyText}>
+            <Text style={[styles.emptyText, { color: theme.textMuted }]}>
               Brak zapisanych planów. Utwórz swój pierwszy schemat!
             </Text>
           }
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={[styles.card, item.isCustom && styles.customCard]}
+              style={[
+                styles.card,
+                {
+                  backgroundColor: theme.surface,
+                  shadowColor: isDark ? "#000" : "#000",
+                },
+                item.isCustom && {
+                  borderLeftWidth: 4,
+                  borderLeftColor: theme.customCardBorder,
+                },
+              ]}
               onPress={() => {
                 if (item.isCustom) {
                   navigation.navigate("CustomPlanDetails", {
@@ -168,12 +194,28 @@ export const PlansScreen = () => {
             >
               <View style={styles.cardHeader}>
                 <View style={styles.titleAndBadge}>
-                  <Text style={styles.cardTitle} numberOfLines={1}>
+                  <Text
+                    style={[styles.cardTitle, { color: theme.text }]}
+                    numberOfLines={1}
+                  >
                     {item.name}
                   </Text>
                   {item.isCustom && (
-                    <View style={styles.privateBadge}>
-                      <Text style={styles.privateBadgeText}>
+                    <View
+                      style={[
+                        styles.privateBadge,
+                        {
+                          backgroundColor: theme.badgeBg,
+                          borderColor: theme.badgeBorder,
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.privateBadgeText,
+                          { color: theme.badgeText },
+                        ]}
+                      >
                         Własny (Prywatny)
                       </Text>
                     </View>
@@ -181,16 +223,27 @@ export const PlansScreen = () => {
                 </View>
 
                 <TouchableOpacity
-                  style={styles.deleteButton}
+                  style={[
+                    styles.deleteButton,
+                    { backgroundColor: theme.dangerBg },
+                  ]}
                   onPress={() => handleDeletePlan(item.id, item.name)}
                 >
-                  <Text style={styles.deleteButtonText}>Usuń</Text>
+                  <Text
+                    style={[styles.deleteButtonText, { color: theme.danger }]}
+                  >
+                    Usuń
+                  </Text>
                 </TouchableOpacity>
               </View>
 
-              <Text style={styles.cardDescription}>{item.description}</Text>
+              <Text
+                style={[styles.cardDescription, { color: theme.textMuted }]}
+              >
+                {item.description}
+              </Text>
 
-              <Text style={styles.cardDate}>
+              <Text style={[styles.cardDate, { color: theme.textMuted }]}>
                 Utworzono:{" "}
                 {new Date(item.created_at).toLocaleDateString("pl-PL")}
               </Text>
@@ -203,47 +256,37 @@ export const PlansScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fa" },
+  container: { flex: 1 },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     padding: 20,
     paddingTop: 50,
-    backgroundColor: "#fff",
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
   },
-  title: { fontSize: 20, fontWeight: "bold", color: "#333" },
+  title: { fontSize: 20, fontWeight: "bold" },
   addButton: {
-    backgroundColor: "#17a2b8",
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 8,
   },
-  addButtonText: { color: "#fff", fontWeight: "bold" },
+  addButtonText: { fontWeight: "bold" },
   listContainer: { padding: 20 },
-
   card: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 12,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  customCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: "#f39c12",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 5,
+    marginBottom: 8,
   },
   titleAndBadge: {
     flex: 1,
@@ -252,40 +295,34 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
-    marginBottom: 4,
+    marginBottom: 6,
   },
   privateBadge: {
-    backgroundColor: "#fff3cd",
     paddingVertical: 4,
     paddingHorizontal: 8,
-    borderRadius: 4,
+    borderRadius: 6,
     borderWidth: 1,
-    borderColor: "#ffeeba",
     alignSelf: "flex-start",
   },
   privateBadgeText: {
     fontSize: 10,
     fontWeight: "bold",
-    color: "#856404",
   },
   deleteButton: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    backgroundColor: "#ffeeee",
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     borderRadius: 6,
   },
   deleteButtonText: {
-    color: "#dc3545",
     fontSize: 12,
     fontWeight: "bold",
   },
-  cardDescription: { fontSize: 14, color: "#666", marginBottom: 10 },
-  cardDate: { fontSize: 12, color: "#999", textAlign: "right" },
+  cardDescription: { fontSize: 14, marginBottom: 12, lineHeight: 20 },
+  cardDate: { fontSize: 12, textAlign: "right" },
   emptyText: {
     textAlign: "center",
-    color: "#666",
     marginTop: 40,
-    fontSize: 16,
+    fontSize: 15,
+    lineHeight: 24,
   },
 });
