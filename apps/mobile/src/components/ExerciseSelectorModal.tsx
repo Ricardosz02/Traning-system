@@ -20,6 +20,8 @@ import {
   Exercise,
 } from "../services/exerciseService";
 import { useWorkoutStore } from "../store/workoutStore";
+import { useThemeStore } from "../store/themeStore";
+import { colors } from "../theme/colors";
 
 const MUSCLE_GROUPS = [
   "Wszystkie",
@@ -33,13 +35,96 @@ const MUSCLE_GROUPS = [
 ];
 
 const MUSCLE_GROUP_MAPPING: Record<string, string[]> = {
-  Klatka: ["chest"],
-  Plecy: ["back", "lats"],
-  Nogi: ["legs", "quads", "hamstrings", "calves", "glutes"],
-  Barki: ["shoulders", "delts"],
-  Biceps: ["biceps"],
-  Triceps: ["triceps"],
-  Brzuch: ["core", "abs", "abdominals"],
+  Klatka: [
+    "chest",
+    "pectoral",
+    "klatk",
+    "piersiow",
+    "wyciskanie leżąc",
+    "wyciskanie sztangi na ławce",
+    "wyciskanie hantli na ławce",
+    "rozpiętki",
+    "pompki",
+    "dipy",
+  ],
+  Plecy: [
+    "back",
+    "lats",
+    "latissimus",
+    "traps",
+    "rhomboid",
+    "erector",
+    "plec",
+    "grzbiet",
+    "najszersz",
+    "kaptur",
+    "lędźw",
+    "podciąganie",
+    "wiosłowanie",
+    "ściąganie drążka",
+    "martwy ciąg",
+  ],
+  Nogi: [
+    "legs",
+    "upper legs",
+    "lower legs",
+    "quad",
+    "hamstring",
+    "calves",
+    "calf",
+    "glute",
+    "nog",
+    "udo",
+    "uda",
+    "czworogłow",
+    "dwugłow",
+    "łydk",
+    "poślad",
+    "przysiad",
+    "wykrok",
+    "suwnic",
+    "prostowanie nóg",
+    "uginanie nóg",
+    "wspięcia",
+    "hip thrust",
+  ],
+  Barki: [
+    "shoulder",
+    "delt",
+    "bark",
+    "naramien",
+    "żołnierskie",
+    "ohp",
+    "wznosy bokiem",
+    "wznosy przodem",
+    "face pull",
+  ],
+  Biceps: [
+    "bicep",
+    "dwugłowy ramienia",
+    "uginanie ramion",
+    "modlitewnik",
+    "młotkow",
+  ],
+  Triceps: [
+    "tricep",
+    "trójgłowy",
+    "francusk",
+    "prostowanie ramion",
+    "wyciskanie wąsko",
+  ],
+  Brzuch: [
+    "core",
+    "abs",
+    "abdomin",
+    "oblique",
+    "brzuch",
+    "skośn",
+    "plank",
+    "deska",
+    "allahy",
+    "unoszenie nóg",
+  ],
 };
 
 interface Props {
@@ -61,6 +146,9 @@ export const ExerciseSelectorModal = ({
   onClose,
   onSelect,
 }: Props) => {
+  const { isDarkMode } = useThemeStore();
+  const theme = isDarkMode ? colors.dark : colors.light;
+
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -134,24 +222,32 @@ export const ExerciseSelectorModal = ({
   };
 
   const filteredExercises = useMemo(() => {
-    return exercises.filter((ex) => {
+    return exercises.filter((ex: any) => {
       const matchesSearch = ex.name
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase().trim());
 
-      let matchesMuscle = true;
-      if (selectedMuscle !== "Wszystkie") {
-        const englishKeywords = MUSCLE_GROUP_MAPPING[selectedMuscle] || [];
-        matchesMuscle =
-          !!ex.muscle_group &&
-          ex.muscle_group.some((dbMuscle) =>
-            englishKeywords.some((keyword) =>
-              dbMuscle.toLowerCase().includes(keyword.toLowerCase()),
-            ),
-          );
-      }
+      if (!matchesSearch) return false;
+      if (selectedMuscle === "Wszystkie") return true;
 
-      return matchesSearch && matchesMuscle;
+      const keywords = MUSCLE_GROUP_MAPPING[selectedMuscle] || [
+        selectedMuscle.toLowerCase(),
+      ];
+
+      const muscles: string[] =
+        Array.isArray(ex.target_muscles) && ex.target_muscles.length > 0
+          ? ex.target_muscles
+          : Array.isArray(ex.muscle_group)
+            ? ex.muscle_group
+            : [];
+
+      const pool = muscles.length > 0 ? muscles : [ex.name || ""];
+
+      return pool.some((tag) =>
+        keywords.some((keyword) =>
+          tag.toLowerCase().includes(keyword.toLowerCase()),
+        ),
+      );
     });
   }, [exercises, searchQuery, selectedMuscle]);
 
@@ -163,32 +259,54 @@ export const ExerciseSelectorModal = ({
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: theme.background }}
       >
-        <View style={styles.container}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Wybierz ćwiczenie</Text>
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
+          <View
+            style={[
+              styles.header,
+              {
+                backgroundColor: theme.surface,
+                borderBottomColor: theme.border,
+              },
+            ]}
+          >
+            <Text style={[styles.title, { color: theme.text }]}>
+              Wybierz ćwiczenie
+            </Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Text style={styles.closeText}>Anuluj</Text>
+              <Text style={[styles.closeText, { color: theme.danger }]}>
+                Anuluj
+              </Text>
             </TouchableOpacity>
           </View>
 
-          <View style={styles.searchContainer}>
+          <View
+            style={[
+              styles.searchContainer,
+              { backgroundColor: theme.surface, borderColor: theme.border },
+            ]}
+          >
             <Ionicons
               name="search"
               size={20}
-              color="#888"
+              color={theme.textMuted}
               style={styles.searchIcon}
             />
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, { color: theme.text }]}
               placeholder="Szukaj (np. wyciskanie)..."
+              placeholderTextColor={theme.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setSearchQuery("")}>
-                <Ionicons name="close-circle" size={20} color="#888" />
+                <Ionicons
+                  name="close-circle"
+                  size={20}
+                  color={theme.textMuted}
+                />
               </TouchableOpacity>
             )}
           </View>
@@ -200,31 +318,43 @@ export const ExerciseSelectorModal = ({
               showsHorizontalScrollIndicator={false}
               data={MUSCLE_GROUPS}
               keyExtractor={(item) => item}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.filterChip,
-                    selectedMuscle === item && styles.filterChipActive,
-                  ]}
-                  onPress={() => setSelectedMuscle(item)}
-                >
-                  <Text
+              renderItem={({ item }) => {
+                const isSelected = selectedMuscle === item;
+                return (
+                  <TouchableOpacity
                     style={[
-                      styles.filterText,
-                      selectedMuscle === item && styles.filterTextActive,
+                      styles.filterChip,
+                      {
+                        backgroundColor: isSelected
+                          ? theme.primary
+                          : theme.surface,
+                        borderColor: isSelected ? theme.primary : theme.border,
+                      },
                     ]}
+                    onPress={() => setSelectedMuscle(item)}
                   >
-                    {item}
-                  </Text>
-                </TouchableOpacity>
-              )}
+                    <Text
+                      style={[
+                        styles.filterText,
+                        {
+                          color: isSelected
+                            ? theme.primaryText
+                            : theme.textMuted,
+                        },
+                      ]}
+                    >
+                      {item}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              }}
             />
           </View>
 
           {loading ? (
             <ActivityIndicator
               size="large"
-              color="#17a2b8"
+              color={theme.primary}
               style={{ marginTop: 20 }}
             />
           ) : (
@@ -234,24 +364,50 @@ export const ExerciseSelectorModal = ({
               // @ts-ignore
               contentContainerStyle={{ padding: 15, paddingBottom: 40 }}
               ListEmptyComponent={
-                <Text style={styles.emptyText}>
-                  Brak wyników dla "{searchQuery}"
+                <Text style={[styles.emptyText, { color: theme.textMuted }]}>
+                  {searchQuery
+                    ? `Brak wyników dla "${searchQuery}"`
+                    : `Brak ćwiczeń w kategorii "${selectedMuscle}"`}
                 </Text>
               }
               renderItem={({ item }) => {
                 // @ts-ignore
                 const videoId = getYoutubeVideoId(item.video_url);
+                const rawMuscles =
+                  Array.isArray((item as any).target_muscles) &&
+                  (item as any).target_muscles.length > 0
+                    ? (item as any).target_muscles
+                    : item.muscle_group;
+
+                const musclesLabel = Array.isArray(rawMuscles)
+                  ? rawMuscles.join(", ")
+                  : rawMuscles || "";
 
                 return (
-                  <View style={styles.itemWrapper}>
+                  <View
+                    style={[
+                      styles.itemWrapper,
+                      {
+                        backgroundColor: theme.surface,
+                        borderColor: theme.border,
+                      },
+                    ]}
+                  >
                     <TouchableOpacity
                       style={styles.itemInfo}
                       onPress={() => handleSelect(item)}
                     >
-                      <Text style={styles.itemName}>{item.name}</Text>
-                      <Text style={styles.itemCategory}>
-                        {item.category} •{" "}
-                        {item.muscle_group ? item.muscle_group.join(", ") : ""}
+                      <Text style={[styles.itemName, { color: theme.text }]}>
+                        {item.name}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.itemCategory,
+                          { color: theme.textMuted },
+                        ]}
+                      >
+                        {item.category}
+                        {musclesLabel ? ` • ${musclesLabel}` : ""}
                       </Text>
                     </TouchableOpacity>
 
@@ -260,7 +416,11 @@ export const ExerciseSelectorModal = ({
                         style={styles.actionBtn}
                         onPress={() => openUrlEditor(item)}
                       >
-                        <Ionicons name="link" size={24} color="#adb5bd" />
+                        <Ionicons
+                          name="link"
+                          size={24}
+                          color={theme.textMuted}
+                        />
                       </TouchableOpacity>
 
                       {videoId && (
@@ -291,13 +451,27 @@ export const ExerciseSelectorModal = ({
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={styles.modalOverlay}
           >
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Dodaj wideo</Text>
-              <Text style={styles.modalSubtitle}>{editingExercise?.name}</Text>
+            <View
+              style={[styles.modalContent, { backgroundColor: theme.surface }]}
+            >
+              <Text style={[styles.modalTitle, { color: theme.text }]}>
+                Dodaj wideo
+              </Text>
+              <Text style={[styles.modalSubtitle, { color: theme.textMuted }]}>
+                {editingExercise?.name}
+              </Text>
 
               <TextInput
-                style={styles.urlInput}
+                style={[
+                  styles.urlInput,
+                  {
+                    backgroundColor: theme.background,
+                    borderColor: theme.border,
+                    color: theme.text,
+                  },
+                ]}
                 placeholder="Wklej link z YouTube..."
+                placeholderTextColor={theme.textMuted}
                 value={videoUrlInput}
                 onChangeText={setVideoUrlInput}
                 autoCapitalize="none"
@@ -309,17 +483,31 @@ export const ExerciseSelectorModal = ({
                   onPress={() => setUrlModalVisible(false)}
                   style={styles.modalCancelBtn}
                 >
-                  <Text style={styles.modalCancelText}>Anuluj</Text>
+                  <Text
+                    style={[styles.modalCancelText, { color: theme.textMuted }]}
+                  >
+                    Anuluj
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={saveVideoUrl}
-                  style={styles.modalSaveBtn}
+                  style={[
+                    styles.modalSaveBtn,
+                    { backgroundColor: theme.primary },
+                  ]}
                   disabled={isUpdatingUrl}
                 >
                   {isUpdatingUrl ? (
-                    <ActivityIndicator size="small" color="#fff" />
+                    <ActivityIndicator size="small" color={theme.primaryText} />
                   ) : (
-                    <Text style={styles.modalSaveText}>Zapisz</Text>
+                    <Text
+                      style={[
+                        styles.modalSaveText,
+                        { color: theme.primaryText },
+                      ]}
+                    >
+                      Zapisz
+                    </Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -333,13 +521,23 @@ export const ExerciseSelectorModal = ({
           transparent
         >
           <View style={styles.videoOverlay}>
-            <View style={styles.videoContent}>
-              <View style={styles.videoHeader}>
-                <Text style={styles.videoTitle} numberOfLines={1}>
+            <View
+              style={[styles.videoContent, { backgroundColor: theme.surface }]}
+            >
+              <View
+                style={[
+                  styles.videoHeader,
+                  { borderBottomColor: theme.border },
+                ]}
+              >
+                <Text
+                  style={[styles.videoTitle, { color: theme.text }]}
+                  numberOfLines={1}
+                >
                   {activeVideoTitle}
                 </Text>
                 <TouchableOpacity onPress={() => setActiveVideoId(null)}>
-                  <Ionicons name="close" size={28} color="#333" />
+                  <Ionicons name="close" size={28} color={theme.text} />
                 </TouchableOpacity>
               </View>
 
@@ -361,27 +559,25 @@ export const ExerciseSelectorModal = ({
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fa" },
+  container: { flex: 1 },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     padding: 20,
-    backgroundColor: "#fff",
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
   },
   title: { fontSize: 18, fontWeight: "bold" },
   closeButton: { padding: 5 },
-  closeText: { color: "#dc3545", fontWeight: "bold" },
+  closeText: { fontWeight: "bold" },
 
   itemWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff",
     padding: 15,
     borderRadius: 8,
     marginBottom: 10,
+    borderWidth: 1,
     elevation: 1,
     shadowColor: "#000",
     shadowOpacity: 0.05,
@@ -391,38 +587,35 @@ const styles = StyleSheet.create({
   actionsContainer: { flexDirection: "row", alignItems: "center" },
   actionBtn: { paddingLeft: 12, justifyContent: "center" },
 
-  itemName: { fontSize: 16, fontWeight: "bold", color: "#333" },
-  itemCategory: { fontSize: 13, color: "#666", marginTop: 4 },
+  itemName: { fontSize: 16, fontWeight: "bold" },
+  itemCategory: { fontSize: 13, marginTop: 4 },
   emptyText: {
     textAlign: "center",
     marginTop: 30,
-    color: "#888",
     fontSize: 16,
   },
 
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#e9ecef",
     margin: 15,
     borderRadius: 10,
+    borderWidth: 1,
     paddingHorizontal: 10,
     height: 45,
   },
   searchIcon: { marginRight: 10 },
-  searchInput: { flex: 1, fontSize: 16, color: "#333" },
+  searchInput: { flex: 1, fontSize: 16 },
   filtersContainer: { paddingLeft: 15, marginBottom: 10, maxHeight: 40 },
   filterChip: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: "#e9ecef",
     borderRadius: 20,
+    borderWidth: 1,
     marginRight: 10,
     justifyContent: "center",
   },
-  filterChipActive: { backgroundColor: "#17a2b8" },
-  filterText: { color: "#555", fontWeight: "bold" },
-  filterTextActive: { color: "#fff" },
+  filterText: { fontWeight: "bold" },
 
   modalOverlay: {
     flex: 1,
@@ -431,7 +624,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContent: {
-    backgroundColor: "#fff",
     width: "85%",
     padding: 20,
     borderRadius: 12,
@@ -439,14 +631,11 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
     marginBottom: 5,
   },
-  modalSubtitle: { fontSize: 14, color: "#666", marginBottom: 20 },
+  modalSubtitle: { fontSize: 14, marginBottom: 20 },
   urlInput: {
-    backgroundColor: "#f8f9fa",
     borderWidth: 1,
-    borderColor: "#ddd",
     borderRadius: 8,
     padding: 12,
     fontSize: 15,
@@ -454,16 +643,15 @@ const styles = StyleSheet.create({
   },
   modalButtons: { flexDirection: "row", justifyContent: "flex-end" },
   modalCancelBtn: { padding: 10, marginRight: 10 },
-  modalCancelText: { color: "#666", fontWeight: "bold", fontSize: 16 },
+  modalCancelText: { fontWeight: "bold", fontSize: 16 },
   modalSaveBtn: {
-    backgroundColor: "#17a2b8",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
     minWidth: 80,
     alignItems: "center",
   },
-  modalSaveText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
+  modalSaveText: { fontWeight: "bold", fontSize: 16 },
 
   videoOverlay: {
     flex: 1,
@@ -472,7 +660,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   videoContent: {
-    backgroundColor: "#fff",
     width: "90%",
     borderRadius: 12,
     overflow: "hidden",
@@ -483,12 +670,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
   },
   videoTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
     flex: 1,
     paddingRight: 10,
   },
