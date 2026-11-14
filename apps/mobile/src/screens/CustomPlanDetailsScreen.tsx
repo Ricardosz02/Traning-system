@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   Alert,
   Modal,
-  useColorScheme,
   SafeAreaView,
 } from "react-native";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
@@ -48,7 +47,6 @@ export const CustomPlanDetailsScreen = () => {
   const navigation = useNavigation();
   const { planId, planName } = route.params;
 
-  const systemColorScheme = useColorScheme();
   const { isDarkMode: isDark } = useThemeStore();
   const theme = isDark ? colors.dark : colors.light;
 
@@ -176,7 +174,7 @@ export const CustomPlanDetailsScreen = () => {
                 styles.dayContainer,
                 {
                   backgroundColor: theme.surface,
-                  shadowColor: isDark ? "#000" : "#000",
+                  shadowColor: "#000",
                 },
               ]}
             >

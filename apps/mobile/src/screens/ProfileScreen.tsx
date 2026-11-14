@@ -28,12 +28,7 @@ import {
   uploadAvatar,
 } from "../services/profileService";
 import { Profile } from "../types/database.types";
-import {
-  signOut,
-  resetPassword,
-  updateEmail,
-  updatePassword,
-} from "../services/authService";
+import { signOut, updateEmail, updatePassword } from "../services/authService";
 import { useSettingsStore } from "../store/settingsStore";
 import { useThemeStore } from "../store/themeStore";
 import { colors } from "../theme/colors";
@@ -484,7 +479,7 @@ export const ProfileScreen = () => {
       <Modal
         visible={isEditModalVisible}
         animationType="slide"
-        transparent={false}
+        presentationStyle="pageSheet"
       >
         <View
           style={[
@@ -604,6 +599,7 @@ export const ProfileScreen = () => {
                   maximumDate={new Date()}
                   onChange={handleDateChange}
                   textColor={theme.text}
+                  themeVariant={isDarkMode ? "dark" : "light"}
                 />
                 {Platform.OS === "ios" && (
                   <TouchableOpacity

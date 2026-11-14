@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
-  useColorScheme,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -35,7 +34,6 @@ export const PlansScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<AppStackParamList>>();
 
-  const systemColorScheme = useColorScheme();
   const { isDarkMode: isDark } = useThemeStore();
   const theme = isDark ? colors.dark : colors.light;
 

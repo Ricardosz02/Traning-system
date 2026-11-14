@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   Alert,
   Modal,
-  useColorScheme,
   SafeAreaView,
 } from "react-native";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
@@ -46,7 +45,6 @@ export const PlanDetailsScreen = () => {
   const navigation = useNavigation();
   const { planId, planName } = route.params;
 
-  const systemColorScheme = useColorScheme();
   const { isDarkMode: isDark } = useThemeStore();
   const theme = isDark ? colors.dark : colors.light;
 
@@ -174,7 +172,7 @@ export const PlanDetailsScreen = () => {
                   styles.dayContainer,
                   {
                     backgroundColor: theme.surface,
-                    shadowColor: isDark ? "#000" : "#000",
+                    shadowColor: "#000",
                   },
                 ]}
               >
@@ -369,6 +367,7 @@ const styles = StyleSheet.create({
   exerciseName: { fontSize: 16, fontWeight: "700", marginBottom: 4 },
   exerciseDetails: { fontSize: 13, fontWeight: "500" },
   muscleMapWrapper: {
+    width: "100%",
     marginVertical: 16,
     alignItems: "center",
   },

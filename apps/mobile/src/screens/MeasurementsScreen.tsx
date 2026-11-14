@@ -119,7 +119,7 @@ export const MeasurementsScreen = () => {
         styles.card,
         {
           backgroundColor: theme.surface,
-          shadowColor: isDarkMode ? "#000" : "#000",
+          shadowColor: "#000",
         },
       ]}
     >

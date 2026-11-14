@@ -151,11 +151,7 @@ export const SetRow = ({ exerciseId, item, index }: SetRowProps) => {
         <TextInput
           style={timeInputStyle}
           keyboardType="numeric"
-          value={
-            item.restTime === 0 || item.restTime === undefined
-              ? ""
-              : item.restTime.toString()
-          }
+          value={!item.rpe ? "" : item.rpe.toString()}
           onChangeText={(text) => handleChange("restTime", text)}
           placeholder="sek"
           placeholderTextColor={isDarkMode ? "#fbbf24" : "#fcd34d"}

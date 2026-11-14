@@ -43,7 +43,10 @@ export const RestTimerBar = () => {
     <View
       style={[
         styles.container,
-        { backgroundColor: isDarkMode ? theme.surface : theme.primary },
+        {
+          backgroundColor: isDarkMode ? theme.surface : theme.primary,
+          borderColor: isDarkMode ? theme.border : "rgba(0,0,0,0.1)",
+        },
       ]}
     >
       <TouchableOpacity

@@ -3,11 +3,11 @@ import { supabase } from "../lib/supabase";
 export interface Exercise {
   id: string;
   name: string;
-  muscle_group: string[];
+  muscle_group?: string[] | null;
   description: string;
   category: string;
-  video_url?: string;
-  target_muscles?: string[];
+  video_url?: string | null;
+  target_muscles?: string[] | null;
 }
 
 export const fetchExercises = async (): Promise<Exercise[]> => {

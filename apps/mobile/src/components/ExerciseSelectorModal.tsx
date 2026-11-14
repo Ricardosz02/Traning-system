@@ -133,7 +133,7 @@ interface Props {
   onSelect?: (exercise: Exercise) => void;
 }
 
-const getYoutubeVideoId = (url?: string) => {
+const getYoutubeVideoId = (url?: string | null) => {
   if (!url) return null;
   const regExp =
     /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
@@ -194,7 +194,6 @@ export const ExerciseSelectorModal = ({
 
   const openUrlEditor = (exercise: Exercise) => {
     setEditingExercise(exercise);
-    // @ts-ignore
     setVideoUrlInput(exercise.video_url || "");
     setUrlModalVisible(true);
   };
@@ -208,7 +207,7 @@ export const ExerciseSelectorModal = ({
       setExercises((prev) =>
         prev.map((ex) =>
           ex.id === editingExercise.id
-            ? { ...ex, video_url: videoUrlInput.trim() }
+            ? { ...ex, video_url: videoUrlInput.trim() || null }
             : ex,
         ),
       );
@@ -222,9 +221,9 @@ export const ExerciseSelectorModal = ({
   };
 
   const filteredExercises = useMemo(() => {
-    return exercises.filter((ex: any) => {
+    return exercises.filter((ex) => {
       const matchesSearch = ex.name
-        ?.toLowerCase()
+        .toLowerCase()
         .includes(searchQuery.toLowerCase().trim());
 
       if (!matchesSearch) return false;
@@ -241,7 +240,7 @@ export const ExerciseSelectorModal = ({
             ? ex.muscle_group
             : [];
 
-      const pool = muscles.length > 0 ? muscles : [ex.name || ""];
+      const pool = muscles.length > 0 ? muscles : [ex.name];
 
       return pool.some((tag) =>
         keywords.some((keyword) =>
@@ -314,7 +313,6 @@ export const ExerciseSelectorModal = ({
           <View style={styles.filtersContainer}>
             <FlatList
               horizontal
-              // @ts-ignore
               showsHorizontalScrollIndicator={false}
               data={MUSCLE_GROUPS}
               keyExtractor={(item) => item}
@@ -361,7 +359,6 @@ export const ExerciseSelectorModal = ({
             <FlatList<Exercise>
               data={filteredExercises}
               keyExtractor={(item) => item.id}
-              // @ts-ignore
               contentContainerStyle={{ padding: 15, paddingBottom: 40 }}
               ListEmptyComponent={
                 <Text style={[styles.emptyText, { color: theme.textMuted }]}>
@@ -371,12 +368,11 @@ export const ExerciseSelectorModal = ({
                 </Text>
               }
               renderItem={({ item }) => {
-                // @ts-ignore
                 const videoId = getYoutubeVideoId(item.video_url);
                 const rawMuscles =
-                  Array.isArray((item as any).target_muscles) &&
-                  (item as any).target_muscles.length > 0
-                    ? (item as any).target_muscles
+                  Array.isArray(item.target_muscles) &&
+                  item.target_muscles.length > 0
+                    ? item.target_muscles
                     : item.muscle_group;
 
                 const musclesLabel = Array.isArray(rawMuscles)
