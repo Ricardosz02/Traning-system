@@ -12,6 +12,7 @@ import {
   StatusBar,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useWorkoutStore } from "../store/workoutStore";
 import { SetRow } from "../components/SetRow";
 import { ExerciseSelectorModal } from "../components/ExerciseSelectorModal";
@@ -32,7 +33,6 @@ import { useSettingsStore } from "../store/settingsStore";
 import { RestTimerBar } from "../components/RestTimerBar";
 import { useThemeStore } from "../store/themeStore";
 import { colors } from "../theme/colors";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AppStackParamList } from "../types/navigation.types";
 
 const DAY_NAMES: Record<number, string> = {
@@ -55,6 +55,27 @@ const formatExerciseCount = (count: number): string => {
   return `${count} ćwiczeń`;
 };
 
+const formatStopwatch = (totalSeconds: number): string => {
+  const safeSeconds = Math.max(0, Math.floor(totalSeconds));
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
+  const seconds = safeSeconds % 60;
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+  if (hours > 0) {
+    return `${hours}:${pad(minutes)}:${pad(seconds)}`;
+  }
+  return `${pad(minutes)}:${pad(seconds)}`;
+};
+
+const formatSummaryDuration = (totalSeconds: number): string => {
+  const minutes = Math.max(1, Math.round(totalSeconds / 60));
+  if (minutes < 60) return `${minutes} min`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m > 0 ? `${h} h ${m} min` : `${h} h`;
+};
+
 const getYoutubeVideoId = (url?: string) => {
   if (!url) return null;
   const regExp =
@@ -69,6 +90,14 @@ interface DashboardPlan {
   day: number;
   exercises: any[];
   isCustom: boolean;
+}
+
+interface WorkoutSummary {
+  durationText: string;
+  totalVolumeKg: number;
+  completedSets: number;
+  exercisesCount: number;
+  avgRpe: number | null;
 }
 
 export const TrainingScreen = () => {
@@ -100,6 +129,9 @@ export const TrainingScreen = () => {
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
   const [activeVideoTitle, setActiveVideoTitle] = useState<string>("");
 
+  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
+  const [summaryData, setSummaryData] = useState<WorkoutSummary | null>(null);
+
   const currentJsDay = new Date().getDay();
   const currentDayOfWeek = currentJsDay === 0 ? 7 : currentJsDay;
 
@@ -113,6 +145,22 @@ export const TrainingScreen = () => {
     });
     return unsubscribe;
   }, [navigation, isActive, user]);
+
+  useEffect(() => {
+    if (!isActive || !startTime) {
+      setElapsedSeconds(0);
+      return;
+    }
+
+    const startMs = new Date(startTime).getTime();
+    const updateTimer = () => {
+      setElapsedSeconds(Math.floor((Date.now() - startMs) / 1000));
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [isActive, startTime]);
 
   useEffect(() => {
     if (isActive && exercises.length > 0) {
@@ -286,29 +334,70 @@ export const TrainingScreen = () => {
       return;
     }
 
+    const endDate = new Date();
+    const startDate = new Date(startTime);
+    const totalDurationSec = Math.max(
+      1,
+      Math.floor((endDate.getTime() - startDate.getTime()) / 1000),
+    );
+
+    let totalVolumeKg = 0;
+    let completedSets = 0;
+    let rpeSum = 0;
+    let rpeCount = 0;
+    let activeExercisesCount = 0;
+
+    exercises.forEach((ex) => {
+      let hasCompletedInEx = false;
+      ex.sets.forEach((set: any) => {
+        if (set.completed) {
+          hasCompletedInEx = true;
+          completedSets += 1;
+          totalVolumeKg += (Number(set.weight) || 0) * (Number(set.reps) || 0);
+          const numericRpe = Number(set.rpe);
+          if (numericRpe > 0) {
+            rpeSum += numericRpe;
+            rpeCount += 1;
+          }
+        }
+      });
+      if (hasCompletedInEx) activeExercisesCount += 1;
+    });
+
     setIsSaving(true);
     try {
       await saveWorkoutSession(
         user.id,
-        startTime.toISOString(),
-        new Date().toISOString(),
+        startDate.toISOString(),
+        endDate.toISOString(),
         exercises,
       );
 
-      Alert.alert("Sukces", "Trening został zapisany!", [
-        {
-          text: "OK",
-          onPress: () => {
-            setIsSaving(false);
-            endWorkout();
-            loadDashboardData();
-          },
-        },
-      ]);
+      setIsSaving(false);
+      setSummaryData({
+        durationText: formatSummaryDuration(totalDurationSec),
+        totalVolumeKg,
+        completedSets,
+        exercisesCount: activeExercisesCount || exercises.length,
+        avgRpe: rpeCount > 0 ? rpeSum / rpeCount : null,
+      });
     } catch (error: any) {
       setIsSaving(false);
       Alert.alert("Błąd", error.message);
     }
+  };
+
+  const handleCloseSummary = () => {
+    setSummaryData(null);
+    endWorkout();
+    loadDashboardData();
+  };
+
+  const formatVolumeDisplay = (kgValue: number) => {
+    if (weightUnit === "lbs") {
+      return `${Math.round(kgValue * 2.20462)} lbs`;
+    }
+    return `${Number(kgValue.toFixed(1))} kg`;
   };
 
   if (!isActive) {
@@ -573,13 +662,27 @@ export const TrainingScreen = () => {
               backgroundColor: theme.surface,
               borderBottomColor: theme.border,
               borderBottomWidth: 1,
-              paddingBottom: 15,
+              paddingBottom: 14,
             },
           ]}
         >
-          <Text style={[styles.title, { color: theme.text }]}>
-            Trening w toku
-          </Text>
+          <View>
+            <Text style={[styles.title, { color: theme.text }]}>
+              Trening w toku
+            </Text>
+            <View style={styles.liveTimerRow}>
+              <Ionicons
+                name="time-outline"
+                size={15}
+                color={theme.primary}
+                style={{ marginRight: 4 }}
+              />
+              <Text style={[styles.liveTimerText, { color: theme.primary }]}>
+                {formatStopwatch(elapsedSeconds)}
+              </Text>
+            </View>
+          </View>
+
           <TouchableOpacity
             style={[
               styles.dangerButton,
@@ -760,6 +863,182 @@ export const TrainingScreen = () => {
           </View>
         </View>
       </Modal>
+
+      <Modal
+        visible={summaryData !== null}
+        animationType="fade"
+        transparent={true}
+      >
+        <View style={styles.summaryOverlay}>
+          <View
+            style={[
+              styles.summaryCard,
+              {
+                backgroundColor: theme.surface,
+                borderColor: theme.border,
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.summaryIconCircle,
+                { backgroundColor: theme.badgeBg },
+              ]}
+            >
+              <Ionicons name="trophy" size={34} color={theme.primary} />
+            </View>
+
+            <Text style={[styles.summaryTitle, { color: theme.text }]}>
+              Trening ukończony!
+            </Text>
+            <Text style={[styles.summarySubtitle, { color: theme.textMuted }]}>
+              Sesja została zapisana w Twojej historii treningów.
+            </Text>
+
+            {summaryData && (
+              <View style={styles.summaryGrid}>
+                <View
+                  style={[
+                    styles.summaryStatBox,
+                    {
+                      backgroundColor: theme.background,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name="time-outline"
+                    size={20}
+                    color={theme.primary}
+                    style={{ marginBottom: 4 }}
+                  />
+                  <Text
+                    style={[styles.summaryStatValue, { color: theme.text }]}
+                  >
+                    {summaryData.durationText}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.summaryStatLabel,
+                      { color: theme.textMuted },
+                    ]}
+                  >
+                    Czas trwania
+                  </Text>
+                </View>
+
+                <View
+                  style={[
+                    styles.summaryStatBox,
+                    {
+                      backgroundColor: theme.background,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name="barbell-outline"
+                    size={20}
+                    color={theme.primary}
+                    style={{ marginBottom: 4 }}
+                  />
+                  <Text
+                    style={[styles.summaryStatValue, { color: theme.text }]}
+                  >
+                    {formatVolumeDisplay(summaryData.totalVolumeKg)}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.summaryStatLabel,
+                      { color: theme.textMuted },
+                    ]}
+                  >
+                    Łączny tonaż
+                  </Text>
+                </View>
+
+                <View
+                  style={[
+                    styles.summaryStatBox,
+                    {
+                      backgroundColor: theme.background,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name="layers-outline"
+                    size={20}
+                    color={theme.primary}
+                    style={{ marginBottom: 4 }}
+                  />
+                  <Text
+                    style={[styles.summaryStatValue, { color: theme.text }]}
+                  >
+                    {summaryData.completedSets}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.summaryStatLabel,
+                      { color: theme.textMuted },
+                    ]}
+                  >
+                    Wykonane serie
+                  </Text>
+                </View>
+
+                <View
+                  style={[
+                    styles.summaryStatBox,
+                    {
+                      backgroundColor: theme.background,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name="speedometer-outline"
+                    size={20}
+                    color={theme.primary}
+                    style={{ marginBottom: 4 }}
+                  />
+                  <Text
+                    style={[styles.summaryStatValue, { color: theme.text }]}
+                  >
+                    {summaryData.avgRpe ? summaryData.avgRpe.toFixed(1) : "—"}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.summaryStatLabel,
+                      { color: theme.textMuted },
+                    ]}
+                  >
+                    Średnie RPE
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={[
+                styles.summaryDoneButton,
+                { backgroundColor: theme.primary },
+              ]}
+              onPress={handleCloseSummary}
+            >
+              <Text
+                style={[
+                  styles.summaryDoneButtonText,
+                  { color: theme.primaryText },
+                ]}
+              >
+                Gotowe
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <RestTimerBar />
     </SafeAreaView>
   );
@@ -779,6 +1058,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     color: "#ffffff",
+  },
+  historyBtn: {
+    backgroundColor: "rgba(255, 255, 255, 0.22)",
+    padding: 7,
+    borderRadius: 8,
   },
   dashboardContainer: { flex: 1, padding: 20 },
   dashboardTitle: { fontSize: 26, fontWeight: "bold", marginBottom: 20 },
@@ -875,16 +1159,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     alignItems: "center",
   },
-  title: { fontSize: 24, fontWeight: "bold" },
+  title: { fontSize: 22, fontWeight: "bold" },
+  liveTimerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 3,
+  },
+  liveTimerText: {
+    fontSize: 15,
+    fontWeight: "700",
+    fontVariant: ["tabular-nums"],
+  },
   dangerButton: {
     paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
     borderRadius: 8,
     minWidth: 100,
     alignItems: "center",
   },
   disabledButton: { opacity: 0.7 },
-  buttonText: { fontWeight: "bold", fontSize: 16 },
+  buttonText: { fontWeight: "bold", fontSize: 15 },
   secondaryButton: {
     paddingVertical: 15,
     borderRadius: 10,
@@ -947,9 +1241,78 @@ const styles = StyleSheet.create({
   },
   videoTitle: { fontSize: 18, fontWeight: "bold", flex: 1, paddingRight: 10 },
   videoWrapper: { width: "100%", backgroundColor: "#000" },
-  historyBtn: {
-    backgroundColor: "rgba(255, 255, 255, 0.22)",
-    padding: 7,
-    borderRadius: 8,
+  summaryOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.65)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  summaryCard: {
+    width: "100%",
+    maxWidth: 400,
+    borderRadius: 18,
+    padding: 24,
+    alignItems: "center",
+    borderWidth: 1,
+    elevation: 6,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+  },
+  summaryIconCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 14,
+  },
+  summaryTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 6,
+    textAlign: "center",
+  },
+  summarySubtitle: {
+    fontSize: 14,
+    textAlign: "center",
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  summaryGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    width: "100%",
+    gap: 10,
+    marginBottom: 22,
+  },
+  summaryStatBox: {
+    width: "48%",
+    paddingVertical: 14,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: "center",
+  },
+  summaryStatValue: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 2,
+  },
+  summaryStatLabel: {
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  summaryDoneButton: {
+    width: "100%",
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  summaryDoneButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
