@@ -32,6 +32,8 @@ import { useSettingsStore } from "../store/settingsStore";
 import { RestTimerBar } from "../components/RestTimerBar";
 import { useThemeStore } from "../store/themeStore";
 import { colors } from "../theme/colors";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { AppStackParamList } from "../types/navigation.types";
 
 const DAY_NAMES: Record<number, string> = {
   1: "Poniedziałek",
@@ -70,7 +72,8 @@ interface DashboardPlan {
 }
 
 export const TrainingScreen = () => {
-  const navigation = useNavigation();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<AppStackParamList>>();
   const { user } = useAuth();
 
   const { isDarkMode } = useThemeStore();
@@ -315,6 +318,12 @@ export const TrainingScreen = () => {
 
         <View style={[styles.topBanner, { backgroundColor: theme.primary }]}>
           <Text style={styles.topBannerTitle}>Trening</Text>
+          <TouchableOpacity
+            style={styles.historyBtn}
+            onPress={() => navigation.navigate("WorkoutHistory")}
+          >
+            <Ionicons name="time-outline" size={22} color="#ffffff" />
+          </TouchableOpacity>
         </View>
 
         {isLoadingDashboard ? (
@@ -938,4 +947,9 @@ const styles = StyleSheet.create({
   },
   videoTitle: { fontSize: 18, fontWeight: "bold", flex: 1, paddingRight: 10 },
   videoWrapper: { width: "100%", backgroundColor: "#000" },
+  historyBtn: {
+    backgroundColor: "rgba(255, 255, 255, 0.22)",
+    padding: 7,
+    borderRadius: 8,
+  },
 });

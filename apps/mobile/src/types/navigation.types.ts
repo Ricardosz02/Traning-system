@@ -9,4 +9,5 @@ export type AppStackParamList = {
   WorkoutCreator: undefined;
   PlanDetails: { planId: string; planName: string };
   CustomPlanDetails: { planId: string; planName: string };
+  WorkoutHistory: undefined;
 };

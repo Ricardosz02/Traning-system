@@ -173,3 +173,100 @@ export const fetchLastExerciseSets = async (
     return null;
   }
 };
+
+export interface HistorySetItem {
+  id: string;
+  weight: number;
+  reps: number;
+  rpe: number | null;
+  setOrder: number;
+}
+
+export interface HistoryExerciseGroup {
+  exerciseId: string;
+  exerciseName: string;
+  sets: HistorySetItem[];
+}
+
+export interface WorkoutHistoryItem {
+  id: string;
+  startedAt: string;
+  endedAt: string;
+  totalVolume: number;
+  durationMinutes: number;
+  exercises: HistoryExerciseGroup[];
+}
+
+export const fetchWorkoutHistory = async (
+  userId: string,
+): Promise<WorkoutHistoryItem[]> => {
+  const { data, error } = await supabase
+    .from("workouts")
+    .select(
+      `
+      id,
+      started_at,
+      ended_at,
+      total_volume,
+      workout_sets (
+        id,
+        weight,
+        reps,
+        rpe,
+        set_order,
+        exercise:exercises (
+          id,
+          name
+        )
+      )
+    `,
+    )
+    .eq("user_id", userId)
+    .order("started_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Błąd pobierania historii treningów: ${error.message}`);
+  }
+
+  return (data || []).map((workout: any) => {
+    const start = new Date(workout.started_at).getTime();
+    const end = workout.ended_at ? new Date(workout.ended_at).getTime() : start;
+    const durationMinutes = Math.max(1, Math.round((end - start) / 60000));
+
+    const sortedSets = [...(workout.workout_sets || [])].sort(
+      (a, b) => (a.set_order || 0) - (b.set_order || 0),
+    );
+
+    const groupedMap = new Map<string, HistoryExerciseGroup>();
+
+    sortedSets.forEach((s: any) => {
+      const exId = s.exercise?.id || "unknown";
+      const exName = s.exercise?.name || "Ćwiczenie";
+
+      if (!groupedMap.has(exId)) {
+        groupedMap.set(exId, {
+          exerciseId: exId,
+          exerciseName: exName,
+          sets: [],
+        });
+      }
+
+      groupedMap.get(exId)!.sets.push({
+        id: s.id,
+        weight: Number(s.weight) || 0,
+        reps: Number(s.reps) || 0,
+        rpe: s.rpe !== null && s.rpe !== undefined ? Number(s.rpe) : null,
+        setOrder: s.set_order || 1,
+      });
+    });
+
+    return {
+      id: workout.id,
+      startedAt: workout.started_at,
+      endedAt: workout.ended_at,
+      totalVolume: Number(workout.total_volume) || 0,
+      durationMinutes,
+      exercises: Array.from(groupedMap.values()),
+    };
+  });
+};

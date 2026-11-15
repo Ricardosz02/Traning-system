@@ -19,6 +19,7 @@ import { WorkoutCreatorScreen } from "./src/screens/WorkoutCreatorScreen";
 import { PlanDetailsScreen } from "./src/screens/PlanDetailsScreen";
 import { CustomPlanDetailsScreen } from "./src/screens/CustomPlanDetailsScreen";
 import AiGeneratorScreen from "./src/screens/AiGeneratorScreen";
+import { WorkoutHistoryScreen } from "./src/screens/WorkoutHistoryScreen";
 
 import {
   AuthStackParamList,
@@ -96,6 +97,19 @@ const NavigationWrapper = () => {
           <AppStack.Screen
             name="CustomPlanDetails"
             component={CustomPlanDetailsScreen}
+          />
+          <AppStack.Screen
+            name="WorkoutHistory"
+            component={WorkoutHistoryScreen}
+            options={{
+              headerShown: true,
+              title: "Historia Treningów",
+              headerStyle: { backgroundColor: theme.surface },
+              headerTintColor: theme.primary,
+              headerTitleStyle: { color: theme.text },
+              headerShadowVisible: false,
+              headerBackTitle: "",
+            }}
           />
         </AppStack.Navigator>
       ) : (

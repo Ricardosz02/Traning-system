@@ -71,7 +71,7 @@ export const ProfileScreen = () => {
     if (!user?.id) return;
     try {
       const { count, error } = await supabase
-        .from("workout_sessions")
+        .from("workouts")
         .select("id", { count: "exact", head: true })
         .eq("user_id", user.id);
 
