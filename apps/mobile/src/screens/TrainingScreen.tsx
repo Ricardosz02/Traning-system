@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Modal,
   SafeAreaView,
+  StatusBar,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useWorkoutStore } from "../store/workoutStore";
@@ -40,6 +41,16 @@ const DAY_NAMES: Record<number, string> = {
   5: "Piątek",
   6: "Sobota",
   7: "Niedziela",
+};
+
+const formatExerciseCount = (count: number): string => {
+  if (count === 1) return "1 ćwiczenie";
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+    return `${count} ćwiczenia`;
+  }
+  return `${count} ćwiczeń`;
 };
 
 const getYoutubeVideoId = (url?: string) => {
@@ -298,190 +309,248 @@ export const TrainingScreen = () => {
   };
 
   if (!isActive) {
-    if (isLoadingDashboard) {
-      return (
-        <View
-          style={[
-            styles.centerContainer,
-            { backgroundColor: theme.background },
-          ]}
-        >
-          <ActivityIndicator size="large" color={theme.primary} />
-        </View>
-      );
-    }
-
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
-        <ScrollView
-          style={[
-            styles.dashboardContainer,
-            { backgroundColor: theme.background },
-          ]}
-          contentContainerStyle={{ paddingBottom: 40 }}
-        >
-          <Text style={[styles.dashboardTitle, { color: theme.text }]}>
-            Gotowy na trening?
-          </Text>
-          <View style={styles.section}>
-            <Text style={[styles.sectionHeader, { color: theme.textMuted }]}>
-              Dzisiejszy plan ({DAY_NAMES[currentDayOfWeek]})
-            </Text>
-            {todayPlans.length > 0 ? (
-              todayPlans.map((tp) => (
-                <View
-                  key={`${tp.planId}-${tp.day}`}
-                  style={[
-                    styles.todayCard,
-                    {
-                      backgroundColor: theme.surface,
-                      borderLeftColor: theme.primary,
-                    },
-                    tp.isCustom && { borderLeftColor: theme.secondary },
-                  ]}
-                >
-                  <View style={styles.cardHeaderRow}>
-                    <Text
-                      style={[styles.todayCardTitle, { color: theme.text }]}
-                    >
-                      {tp.planName}
-                    </Text>
-                    {tp.isCustom && (
-                      <Text
-                        style={[
-                          styles.privateBadgeTextSmall,
-                          {
-                            backgroundColor: theme.badgeBg,
-                            color: theme.badgeText,
-                          },
-                        ]}
-                      >
-                        🔒 Własny
-                      </Text>
-                    )}
-                  </View>
-                  <Text
-                    style={[styles.todayCardDesc, { color: theme.textMuted }]}
-                  >
-                    {tp.exercises.length} ćwiczeń zaplanowanych na dzisiaj.
-                  </Text>
-                  <TouchableOpacity
-                    style={[
-                      styles.startTodayButton,
-                      { backgroundColor: theme.primary },
-                      tp.isCustom && { backgroundColor: theme.secondary },
-                    ]}
-                    onPress={() =>
-                      handleStartFromDashboard(tp.exercises, tp.isCustom)
-                    }
-                  >
-                    <Text
-                      style={[
-                        styles.startTodayText,
-                        { color: theme.primaryText },
-                      ]}
-                    >
-                      Rozpocznij {DAY_NAMES[currentDayOfWeek]}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              ))
-            ) : (
-              <View
-                style={[styles.restDayCard, { backgroundColor: theme.surface }]}
-              >
-                <Text style={[styles.restDayTitle, { color: theme.text }]}>
-                  Dzień wolny!
-                </Text>
-                <Text style={[styles.restDayDesc, { color: theme.textMuted }]}>
-                  Nie masz dzisiaj w harmonogramie żadnego planu. Odpoczywaj lub
-                  wybierz inny dzień z listy poniżej.
-                </Text>
-              </View>
-            )}
-          </View>
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.primary }}>
+        <StatusBar barStyle="light-content" />
 
-          {otherPlans.length > 0 && (
+        <View style={[styles.topBanner, { backgroundColor: theme.primary }]}>
+          <Text style={styles.topBannerTitle}>Trening</Text>
+        </View>
+
+        {isLoadingDashboard ? (
+          <View
+            style={[
+              styles.centerContainer,
+              { backgroundColor: theme.background },
+            ]}
+          >
+            <ActivityIndicator size="large" color={theme.primary} />
+          </View>
+        ) : (
+          <ScrollView
+            style={[
+              styles.dashboardContainer,
+              { backgroundColor: theme.background },
+            ]}
+            contentContainerStyle={{ paddingBottom: 40 }}
+          >
+            <Text style={[styles.dashboardTitle, { color: theme.text }]}>
+              Gotowy na trening?
+            </Text>
             <View style={styles.section}>
               <Text style={[styles.sectionHeader, { color: theme.textMuted }]}>
-                Wybierz inny dzień (Alternatywa)
+                Dzisiejszy plan ({DAY_NAMES[currentDayOfWeek]})
               </Text>
-              {otherPlans.map((op, index) => (
-                <TouchableOpacity
-                  key={`${op.planId}-${op.day}-${index}`}
-                  style={[
-                    styles.otherCard,
-                    {
-                      backgroundColor: theme.surface,
-                      borderColor: theme.border,
-                    },
-                    op.isCustom && {
-                      borderLeftWidth: 3,
-                      borderLeftColor: theme.secondary,
-                    },
-                  ]}
-                  onPress={() =>
-                    handleStartFromDashboard(op.exercises, op.isCustom)
-                  }
-                >
-                  <View style={{ flex: 1 }}>
+              {todayPlans.length > 0 ? (
+                todayPlans.map((tp) => (
+                  <View
+                    key={`${tp.planId}-${tp.day}`}
+                    style={[
+                      styles.todayCard,
+                      {
+                        backgroundColor: theme.surface,
+                        borderLeftColor: theme.primary,
+                      },
+                      tp.isCustom && {
+                        borderLeftColor: theme.customCardBorder,
+                      },
+                    ]}
+                  >
                     <View style={styles.cardHeaderRow}>
                       <Text
-                        style={[styles.otherCardTitle, { color: theme.text }]}
+                        style={[styles.todayCardTitle, { color: theme.text }]}
                       >
-                        {op.planName}
+                        {tp.planName}
                       </Text>
-                      {op.isCustom && (
-                        <Text
+                      {tp.isCustom && (
+                        <View
                           style={[
-                            styles.privateBadgeTextSmall,
+                            styles.privateBadgeClean,
                             {
                               backgroundColor: theme.badgeBg,
-                              color: theme.badgeText,
-                              marginLeft: 5,
+                              borderColor: theme.badgeBorder,
                             },
                           ]}
                         >
-                          🔒
-                        </Text>
+                          <Text
+                            style={[
+                              styles.privateBadgeCleanText,
+                              { color: theme.badgeText },
+                            ]}
+                          >
+                            Własny
+                          </Text>
+                        </View>
                       )}
                     </View>
                     <Text
-                      style={[styles.otherCardDesc, { color: theme.textMuted }]}
+                      style={[styles.todayCardDesc, { color: theme.textMuted }]}
                     >
-                      - {DAY_NAMES[op.day]} ({op.exercises.length} ćwiczeń)
+                      {formatExerciseCount(tp.exercises.length)} zaplanowane na
+                      dzisiaj.
                     </Text>
+                    <TouchableOpacity
+                      style={[
+                        styles.startTodayButton,
+                        { backgroundColor: theme.primary },
+                        tp.isCustom && {
+                          backgroundColor: theme.customCardBorder,
+                        },
+                      ]}
+                      onPress={() =>
+                        handleStartFromDashboard(tp.exercises, tp.isCustom)
+                      }
+                    >
+                      <Text
+                        style={[
+                          styles.startTodayText,
+                          { color: theme.primaryText },
+                        ]}
+                      >
+                        Rozpocznij {DAY_NAMES[currentDayOfWeek]}
+                      </Text>
+                    </TouchableOpacity>
                   </View>
-                  <Text style={[styles.arrowIcon, { color: theme.textMuted }]}>
-                    ➔
+                ))
+              ) : (
+                <View
+                  style={[
+                    styles.restDayCard,
+                    { backgroundColor: theme.surface },
+                  ]}
+                >
+                  <Ionicons
+                    name="cafe-outline"
+                    size={36}
+                    color={theme.primary}
+                    style={{ marginBottom: 10 }}
+                  />
+                  <Text style={[styles.restDayTitle, { color: theme.text }]}>
+                    Dzień wolny!
                   </Text>
-                </TouchableOpacity>
-              ))}
+                  <Text
+                    style={[styles.restDayDesc, { color: theme.textMuted }]}
+                  >
+                    Nie masz dzisiaj w harmonogramie żadnego planu. Odpoczywaj
+                    lub wybierz inny dzień z listy poniżej.
+                  </Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.restDayActionBtn,
+                      { borderColor: theme.primary },
+                    ]}
+                    onPress={startWorkout}
+                  >
+                    <Text
+                      style={[
+                        styles.restDayActionText,
+                        { color: theme.primary },
+                      ]}
+                    >
+                      + Rozpocznij pusty trening
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
-          )}
-          <View style={[styles.divider, { backgroundColor: theme.border }]} />
-          <TouchableOpacity
-            style={[
-              styles.freeWorkoutButton,
-              {
-                backgroundColor: theme.surface,
-                borderColor: theme.border,
-                borderWidth: 1,
-              },
-            ]}
-            onPress={startWorkout}
-          >
-            <Text style={[styles.freeWorkoutText, { color: theme.text }]}>
-              Rozpocznij pusty trening (bez planu)
-            </Text>
-          </TouchableOpacity>
-        </ScrollView>
+
+            {otherPlans.length > 0 && (
+              <View style={styles.section}>
+                <Text
+                  style={[styles.sectionHeader, { color: theme.textMuted }]}
+                >
+                  Wybierz inny dzień (Alternatywa)
+                </Text>
+                {otherPlans.map((op, index) => (
+                  <TouchableOpacity
+                    key={`${op.planId}-${op.day}-${index}`}
+                    style={[
+                      styles.otherCard,
+                      {
+                        backgroundColor: theme.surface,
+                        borderColor: theme.border,
+                      },
+                      op.isCustom && {
+                        borderLeftWidth: 3,
+                        borderLeftColor: theme.customCardBorder,
+                      },
+                    ]}
+                    onPress={() =>
+                      handleStartFromDashboard(op.exercises, op.isCustom)
+                    }
+                  >
+                    <View style={{ flex: 1 }}>
+                      <View style={styles.cardHeaderRow}>
+                        <Text
+                          style={[styles.otherCardTitle, { color: theme.text }]}
+                        >
+                          {op.planName}
+                        </Text>
+                        {op.isCustom && (
+                          <View
+                            style={[
+                              styles.privateBadgeCleanSmall,
+                              {
+                                backgroundColor: theme.badgeBg,
+                                borderColor: theme.badgeBorder,
+                              },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.privateBadgeCleanTextSmall,
+                                { color: theme.badgeText },
+                              ]}
+                            >
+                              Własny
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text
+                        style={[
+                          styles.otherCardDesc,
+                          { color: theme.textMuted },
+                        ]}
+                      >
+                        - {DAY_NAMES[op.day]} (
+                        {formatExerciseCount(op.exercises.length)})
+                      </Text>
+                    </View>
+                    <Text
+                      style={[styles.arrowIcon, { color: theme.textMuted }]}
+                    >
+                      ➔
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+            <View style={[styles.divider, { backgroundColor: theme.border }]} />
+            <TouchableOpacity
+              style={[
+                styles.freeWorkoutButton,
+                {
+                  backgroundColor: theme.surface,
+                  borderColor: theme.border,
+                  borderWidth: 1,
+                },
+              ]}
+              onPress={startWorkout}
+            >
+              <Text style={[styles.freeWorkoutText, { color: theme.text }]}>
+                Rozpocznij pusty trening (bez planu)
+              </Text>
+            </TouchableOpacity>
+          </ScrollView>
+        )}
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.surface }}>
+      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
       <View
         style={[
           styles.container,
@@ -690,8 +759,20 @@ export const TrainingScreen = () => {
 const styles = StyleSheet.create({
   centerContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   container: { flex: 1 },
-  dashboardContainer: { flex: 1, padding: 20, paddingTop: 30 },
-  dashboardTitle: { fontSize: 28, fontWeight: "bold", marginBottom: 25 },
+  topBanner: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    minHeight: 56,
+  },
+  topBannerTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#ffffff",
+  },
+  dashboardContainer: { flex: 1, padding: 20 },
+  dashboardTitle: { fontSize: 26, fontWeight: "bold", marginBottom: 20 },
   section: { marginBottom: 25 },
   sectionHeader: {
     fontSize: 14,
@@ -713,14 +794,26 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  privateBadgeTextSmall: {
-    fontSize: 12,
+  privateBadgeClean: {
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  privateBadgeCleanText: {
+    fontSize: 11,
     fontWeight: "bold",
-    paddingHorizontal: 6,
+  },
+  privateBadgeCleanSmall: {
     paddingVertical: 2,
+    paddingHorizontal: 6,
     borderRadius: 4,
-    marginLeft: 10,
-    overflow: "hidden",
+    borderWidth: 1,
+    marginLeft: 6,
+  },
+  privateBadgeCleanTextSmall: {
+    fontSize: 10,
+    fontWeight: "bold",
   },
   todayCardTitle: { fontSize: 20, fontWeight: "bold" },
   todayCardDesc: { fontSize: 14, marginTop: 5, marginBottom: 15 },
@@ -730,9 +823,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   startTodayText: { fontWeight: "bold", fontSize: 16 },
-  restDayCard: { borderRadius: 12, padding: 20, alignItems: "center" },
+  restDayCard: {
+    borderRadius: 12,
+    padding: 20,
+    alignItems: "center",
+  },
   restDayTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 5 },
-  restDayDesc: { fontSize: 14, textAlign: "center" },
+  restDayDesc: { fontSize: 14, textAlign: "center", marginBottom: 15 },
+  restDayActionBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    backgroundColor: "transparent",
+  },
+  restDayActionText: {
+    fontWeight: "bold",
+    fontSize: 14,
+  },
   otherCard: {
     flexDirection: "row",
     justifyContent: "space-between",

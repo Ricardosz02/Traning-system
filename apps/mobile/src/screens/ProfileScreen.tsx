@@ -14,6 +14,7 @@ import {
   Modal,
   Linking,
   SafeAreaView,
+  StatusBar,
 } from "react-native";
 import DateTimePicker, {
   DateTimePickerEvent,
@@ -32,6 +33,7 @@ import { signOut, updateEmail, updatePassword } from "../services/authService";
 import { useSettingsStore } from "../store/settingsStore";
 import { useThemeStore } from "../store/themeStore";
 import { colors } from "../theme/colors";
+import { supabase } from "../lib/supabase";
 
 export const ProfileScreen = () => {
   const { user } = useAuth();
@@ -43,6 +45,7 @@ export const ProfileScreen = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profileData, setProfileData] = useState<Profile | null>(null);
+  const [workoutsCount, setWorkoutsCount] = useState<number>(0);
 
   const [displayName, setDisplayName] = useState("");
   const [weight, setWeight] = useState("");
@@ -64,11 +67,31 @@ export const ProfileScreen = () => {
   const [confirmPasswordInput, setConfirmPasswordInput] = useState("");
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
 
+  const loadWorkoutsCount = async () => {
+    if (!user?.id) return;
+    try {
+      const { count, error } = await supabase
+        .from("workout_sessions")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id);
+
+      if (!error && count !== null) {
+        setWorkoutsCount(count);
+      }
+    } catch (error) {
+      console.error("Błąd pobierania liczby treningów:", error);
+    }
+  };
+
   useEffect(() => {
     const loadProfile = async () => {
       if (!user) return;
       try {
-        const data = await fetchUserProfile(user.id);
+        const [data] = await Promise.all([
+          fetchUserProfile(user.id),
+          loadWorkoutsCount(),
+        ]);
+
         setProfileData(data);
         setDisplayName(data.display_name || "");
         setWeight(data.weight ? data.weight.toString() : "");
@@ -87,7 +110,12 @@ export const ProfileScreen = () => {
     };
 
     loadProfile();
-  }, [user]);
+
+    const unsubscribe = navigation.addListener("focus", () => {
+      loadWorkoutsCount();
+    });
+    return unsubscribe;
+  }, [user, navigation]);
 
   const handlePickImage = async () => {
     const permissionResult =
@@ -263,6 +291,12 @@ export const ProfileScreen = () => {
     );
   }
 
+  const formattedWeight = profileData?.weight
+    ? weightUnit === "lbs"
+      ? `${(Number(profileData.weight) * 2.20462).toFixed(1)} lbs`
+      : `${Number(profileData.weight).toFixed(1)} kg`
+    : "—";
+
   const SettingsRow = ({
     icon,
     title,
@@ -313,20 +347,23 @@ export const ProfileScreen = () => {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.surface }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.primary }}>
+      <StatusBar barStyle="light-content" />
+
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: theme.primary, borderBottomWidth: 0 },
+        ]}
+      >
+        <Text style={[styles.headerTitle, { color: "#ffffff" }]}>
+          Twój Profil
+        </Text>
+      </View>
+
       <ScrollView
         style={[styles.container, { backgroundColor: theme.background }]}
       >
-        <View
-          style={[
-            styles.header,
-            { backgroundColor: theme.surface, borderBottomColor: theme.border },
-          ]}
-        >
-          <Text style={[styles.headerTitle, { color: theme.text }]}>
-            Twój Profil
-          </Text>
-        </View>
         <View
           style={[
             styles.profileHeader,
@@ -369,6 +406,51 @@ export const ProfileScreen = () => {
           <Text style={[styles.userEmail, { color: theme.textMuted }]}>
             {user?.email}
           </Text>
+
+          <View
+            style={[
+              styles.statsBar,
+              {
+                backgroundColor: theme.background,
+                borderColor: theme.border,
+              },
+            ]}
+          >
+            <View style={styles.statItem}>
+              <Text style={[styles.statValue, { color: theme.text }]}>
+                {formattedWeight}
+              </Text>
+              <Text style={[styles.statLabel, { color: theme.textMuted }]}>
+                Waga
+              </Text>
+            </View>
+
+            <View
+              style={[styles.statDivider, { backgroundColor: theme.border }]}
+            />
+
+            <View style={styles.statItem}>
+              <Text style={[styles.statValue, { color: theme.text }]}>
+                {profileData?.height ? `${profileData.height} cm` : "—"}
+              </Text>
+              <Text style={[styles.statLabel, { color: theme.textMuted }]}>
+                Wzrost
+              </Text>
+            </View>
+
+            <View
+              style={[styles.statDivider, { backgroundColor: theme.border }]}
+            />
+
+            <View style={styles.statItem}>
+              <Text style={[styles.statValue, { color: theme.primary }]}>
+                {workoutsCount}
+              </Text>
+              <Text style={[styles.statLabel, { color: theme.textMuted }]}>
+                Treningi
+              </Text>
+            </View>
+          </View>
         </View>
 
         <View style={styles.section}>
@@ -415,8 +497,54 @@ export const ProfileScreen = () => {
             <SettingsRow
               icon="barbell-outline"
               title="Jednostka wagi"
-              value={weightUnit.toUpperCase()}
-              onPress={() => setWeightUnit(weightUnit === "kg" ? "lbs" : "kg")}
+              rightElement={
+                <View style={styles.unitToggleContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.unitBtn,
+                      weightUnit === "kg" && { backgroundColor: theme.primary },
+                    ]}
+                    onPress={() => setWeightUnit("kg")}
+                  >
+                    <Text
+                      style={[
+                        styles.unitBtnText,
+                        {
+                          color:
+                            weightUnit === "kg"
+                              ? theme.primaryText
+                              : theme.textMuted,
+                        },
+                      ]}
+                    >
+                      KG
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.unitBtn,
+                      weightUnit === "lbs" && {
+                        backgroundColor: theme.primary,
+                      },
+                    ]}
+                    onPress={() => setWeightUnit("lbs")}
+                  >
+                    <Text
+                      style={[
+                        styles.unitBtnText,
+                        {
+                          color:
+                            weightUnit === "lbs"
+                              ? theme.primaryText
+                              : theme.textMuted,
+                        },
+                      ]}
+                    >
+                      LBS
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              }
             />
           </View>
         </View>
@@ -427,8 +555,8 @@ export const ProfileScreen = () => {
           </Text>
           <View style={[styles.card, { backgroundColor: theme.surface }]}>
             <SettingsRow
-              icon="moon-outline"
-              title="Tryb ciemny (Dark Mode)"
+              icon={isDarkMode ? "moon" : "sunny-outline"}
+              title={isDarkMode ? "Tryb ciemny" : "Tryb jasny"}
               rightElement={
                 <Switch
                   value={isDarkMode}
@@ -654,7 +782,7 @@ export const ProfileScreen = () => {
             </Text>
             <Text style={[styles.popupDesc, { color: theme.textMuted }]}>
               Wpisz nowy adres e-mail. Na oba adresy (stary i nowy) zostaną
-              wysłane linki potwierdzające.
+              wysyłane linki potwierdzające.
             </Text>
             <TextInput
               style={[
@@ -796,11 +924,18 @@ export const ProfileScreen = () => {
 const styles = StyleSheet.create({
   centerContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   container: { flex: 1 },
-  header: { padding: 20, paddingTop: 10, borderBottomWidth: 1 },
-  headerTitle: { fontSize: 24, fontWeight: "bold" },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    minHeight: 56,
+  },
+  headerTitle: { fontSize: 20, fontWeight: "bold" },
   profileHeader: {
     alignItems: "center",
-    paddingVertical: 40,
+    paddingVertical: 28,
+    paddingHorizontal: 20,
     borderBottomWidth: 1,
   },
   avatarContainer: { position: "relative", marginBottom: 15 },
@@ -819,6 +954,34 @@ const styles = StyleSheet.create({
   },
   userName: { fontSize: 22, fontWeight: "bold" },
   userEmail: { fontSize: 14, marginTop: 5 },
+  statsBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+    marginTop: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  statItem: {
+    flex: 1,
+    alignItems: "center",
+  },
+  statValue: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 2,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  statDivider: {
+    width: 1,
+    height: 28,
+  },
   section: { marginTop: 25, paddingHorizontal: 15 },
   sectionHeader: {
     fontSize: 12,
@@ -900,4 +1063,19 @@ const styles = StyleSheet.create({
   },
   cancelBtn: { padding: 10, marginRight: 10 },
   confirmBtn: { padding: 10, borderRadius: 8 },
+  unitToggleContainer: {
+    flexDirection: "row",
+    backgroundColor: "rgba(150, 150, 150, 0.15)",
+    borderRadius: 8,
+    padding: 2,
+  },
+  unitBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
+  unitBtnText: {
+    fontSize: 13,
+    fontWeight: "bold",
+  },
 });
