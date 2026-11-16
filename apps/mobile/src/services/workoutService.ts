@@ -1,6 +1,112 @@
 import { supabase } from "../lib/supabase";
 import { WorkoutExercise } from "../store/workoutStore";
 
+const inferMuscleGroupsFromName = (name: string): string[] => {
+  const n = name.toLowerCase();
+  const inferred: string[] = [];
+
+  if (
+    n.includes("klat") ||
+    n.includes("bench") ||
+    n.includes("rozpięt") ||
+    n.includes("pompk") ||
+    n.includes("chest")
+  ) {
+    inferred.push("CHEST");
+  }
+  if (
+    n.includes("wiosł") ||
+    n.includes("ściąg") ||
+    n.includes("podciąg") ||
+    n.includes("lat") ||
+    n.includes("pull") ||
+    n.includes("row")
+  ) {
+    inferred.push("BACK_LATS");
+  }
+  if (
+    n.includes("kaptur") ||
+    n.includes("szrugs") ||
+    n.includes("shrug") ||
+    n.includes("trap")
+  ) {
+    inferred.push("BACK_TRAPS");
+  }
+  if (
+    n.includes("martwy") ||
+    n.includes("deadlift") ||
+    n.includes("prostownik") ||
+    n.includes("dzień dobry")
+  ) {
+    inferred.push("BACK_ERECTORS", "HAMSTRINGS", "GLUTES");
+  }
+  if (
+    n.includes("bark") ||
+    n.includes("żołnier") ||
+    n.includes("ohp") ||
+    n.includes("wznos") ||
+    n.includes("shoulder") ||
+    n.includes("delt")
+  ) {
+    inferred.push("SHOULDERS_FRONT", "SHOULDERS_MID");
+  }
+  if (n.includes("biceps") || n.includes("uginan") || n.includes("curl")) {
+    inferred.push("BICEPS");
+  }
+  if (
+    n.includes("triceps") ||
+    n.includes("francusk") ||
+    n.includes("prostowan") ||
+    n.includes("dipy") ||
+    n.includes("dip")
+  ) {
+    inferred.push("TRICEPS");
+  }
+  if (
+    n.includes("przedrami") ||
+    n.includes("nadgarst") ||
+    n.includes("forearm")
+  ) {
+    inferred.push("FOREARMS");
+  }
+  if (
+    n.includes("brzuch") ||
+    n.includes("plank") ||
+    n.includes("deska") ||
+    n.includes("spięc") ||
+    n.includes("abs") ||
+    n.includes("core")
+  ) {
+    inferred.push("ABS_RECTUS");
+  }
+  if (
+    n.includes("przysiad") ||
+    n.includes("squat") ||
+    n.includes("wypychan") ||
+    n.includes("wykrok") ||
+    n.includes("czworogłow") ||
+    n.includes("quad")
+  ) {
+    inferred.push("QUADS");
+  }
+  if (n.includes("dwugłow") || n.includes("hamstring") || n.includes("rdl")) {
+    inferred.push("HAMSTRINGS");
+  }
+  if (n.includes("poślad") || n.includes("hip thrust") || n.includes("glute")) {
+    inferred.push("GLUTES");
+  }
+  if (
+    n.includes("łyd") ||
+    n.includes("wspięc") ||
+    n.includes("calf") ||
+    n.includes("calves")
+  ) {
+    inferred.push("CALVES");
+  }
+
+  return inferred;
+};
+
 export const saveWorkoutSession = async (
   userId: string,
   startedAt: string,
@@ -37,9 +143,17 @@ export const saveWorkoutSession = async (
       if (byName && byName.length > 0) {
         realExerciseIds[ex.exerciseId] = byName[0].id;
       } else {
+        const inferredMuscles = inferMuscleGroupsFromName(ex.name);
         const { data: newEx, error: newExError } = await supabase
           .from("exercises")
-          .insert([{ name: ex.name }])
+          .insert([
+            {
+              name: ex.name,
+              ...(inferredMuscles.length > 0
+                ? { muscle_group: inferredMuscles }
+                : {}),
+            },
+          ])
           .select("id")
           .single();
 
@@ -185,6 +299,7 @@ export interface HistorySetItem {
 export interface HistoryExerciseGroup {
   exerciseId: string;
   exerciseName: string;
+  muscleGroups: string[];
   sets: HistorySetItem[];
 }
 
@@ -216,7 +331,8 @@ export const fetchWorkoutHistory = async (
         set_order,
         exercise:exercises (
           id,
-          name
+          name,
+          muscle_group
         )
       )
     `,
@@ -227,6 +343,22 @@ export const fetchWorkoutHistory = async (
   if (error) {
     throw new Error(`Błąd pobierania historii treningów: ${error.message}`);
   }
+
+  const { data: customItems } = await supabase
+    .from("custom_workout_items")
+    .select("exercise_name, muscle_group");
+
+  const customMuscleMap = new Map<string, string[]>();
+  (customItems || []).forEach((ci: any) => {
+    if (ci.exercise_name && ci.muscle_group) {
+      const groups = Array.isArray(ci.muscle_group)
+        ? ci.muscle_group
+        : [ci.muscle_group];
+      if (groups.length > 0) {
+        customMuscleMap.set(ci.exercise_name.toLowerCase().trim(), groups);
+      }
+    }
+  });
 
   return (data || []).map((workout: any) => {
     const start = new Date(workout.started_at).getTime();
@@ -243,10 +375,27 @@ export const fetchWorkoutHistory = async (
       const exId = s.exercise?.id || "unknown";
       const exName = s.exercise?.name || "Ćwiczenie";
 
+      let muscleGroups: string[] = [];
+      const rawMg = s.exercise?.muscle_group;
+
+      if (Array.isArray(rawMg) && rawMg.length > 0) {
+        muscleGroups = rawMg;
+      } else if (typeof rawMg === "string" && rawMg.trim().length > 0) {
+        muscleGroups = [rawMg.trim()];
+      } else {
+        const fromCustom = customMuscleMap.get(exName.toLowerCase().trim());
+        if (fromCustom && fromCustom.length > 0) {
+          muscleGroups = fromCustom;
+        } else {
+          muscleGroups = inferMuscleGroupsFromName(exName);
+        }
+      }
+
       if (!groupedMap.has(exId)) {
         groupedMap.set(exId, {
           exerciseId: exId,
           exerciseName: exName,
+          muscleGroups,
           sets: [],
         });
       }
